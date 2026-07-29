@@ -20,69 +20,23 @@ const imageStorage = {
   checkin: null
 };
 
-// ---- Database Setup ----
+// ---- Database Setup (runs per-request on Vercel serverless) ----
+let dbReady = false;
 async function setupDatabase() {
+  if (dbReady) return;
   try {
-    // Create invites table
-    await sql`
-      CREATE TABLE IF NOT EXISTS invites (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
-        plus_one_eligible BOOLEAN DEFAULT false
-      )
-    `;
-    
-    // Create guests table
-    await sql`
-      CREATE TABLE IF NOT EXISTS guests (
-        id SERIAL PRIMARY KEY,
-        tag_uid TEXT,
-        card_id INTEGER,
-        name TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
-        plus_one BOOLEAN DEFAULT false,
-        plus_one_name TEXT,
-        status VARCHAR(20) DEFAULT 'pending',
-        registered_at TIMESTAMP DEFAULT NOW(),
-        checked_in BOOLEAN DEFAULT false,
-        checked_in_at TIMESTAMP
-      )
-    `;
-    
-    // Create cards table
-    await sql`
-      CREATE TABLE IF NOT EXISTS cards (
-        id SERIAL PRIMARY KEY,
-        uid_hash VARCHAR(64) UNIQUE NOT NULL,
-        status VARCHAR(20) DEFAULT 'unused',
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `;
-    
-    // Create audit_logs table
-    await sql`
-      CREATE TABLE IF NOT EXISTS audit_logs (
-        id SERIAL PRIMARY KEY,
-        event_type VARCHAR(50) NOT NULL,
-        card_uid_hash VARCHAR(64),
-        guest_id INTEGER,
-        ip_address VARCHAR(45),
-        user_agent TEXT,
-        details JSONB,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `;
-    
+    await sql`CREATE TABLE IF NOT EXISTS invites (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT, phone TEXT, plus_one_eligible BOOLEAN DEFAULT false)`;
+    await sql`CREATE TABLE IF NOT EXISTS guests (id SERIAL PRIMARY KEY, tag_uid TEXT, card_id INTEGER, name TEXT NOT NULL, email TEXT, phone TEXT, plus_one BOOLEAN DEFAULT false, plus_one_name TEXT, status VARCHAR(20) DEFAULT 'pending', registered_at TIMESTAMP DEFAULT NOW(), checked_in BOOLEAN DEFAULT false, checked_in_at TIMESTAMP)`;
+    await sql`CREATE TABLE IF NOT EXISTS cards (id SERIAL PRIMARY KEY, uid_hash VARCHAR(64) UNIQUE NOT NULL, status VARCHAR(20) DEFAULT 'unused', created_at TIMESTAMP DEFAULT NOW())`;
+    await sql`CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, event_type VARCHAR(50) NOT NULL, card_uid_hash VARCHAR(64), guest_id INTEGER, ip_address VARCHAR(45), user_agent TEXT, details JSONB, created_at TIMESTAMP DEFAULT NOW())`;
+    dbReady = true;
     console.log('[db] All tables ready');
   } catch (err) {
     console.error('[db] Setup error:', err.message);
   }
 }
 
-setupDatabase();
+setupDatabase().catch(() => {});
 
 // ---- Security Middleware ----
 app.use(helmet({
@@ -168,6 +122,7 @@ const checkinSchema = z.object({
 
 // ---- Invite list lookup (for plus-one eligibility) ----
 app.get('/api/invites/search', async (req, res) => {
+  await setupDatabase();
   const q = (req.query.q || '').toLowerCase().trim();
   if (!q) return res.json([]);
   const matches = await sql`
@@ -180,6 +135,7 @@ app.get('/api/invites/search', async (req, res) => {
 
 // ---- Card Status Check ----
 app.get('/api/card/:uid/status', async (req, res) => {
+  await setupDatabase();
   const uid = req.params.uid;
   
   if (!uid || !/^[A-F0-9:]+$/i.test(uid)) {
@@ -230,6 +186,7 @@ app.get('/api/card/:uid/status', async (req, res) => {
 
 // ---- V2 Registration (NFC Token Flow) ----
 app.post('/api/register-v2', registrationLimiter, async (req, res) => {
+  await setupDatabase();
   // Validate input
   const result = registerSchema.safeParse(req.body);
   if (!result.success) {
@@ -323,6 +280,7 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
 
 // ---- V2 Check-in ----
 app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
+  await setupDatabase();
   // Validate input
   const result = checkinSchema.safeParse(req.body);
   if (!result.success) {
@@ -416,6 +374,7 @@ app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
 
 // ---- V1 Registration (Legacy) ----
 app.post('/api/register', async (req, res) => {
+  await setupDatabase();
   const { tag_uid, name, email, phone, plus_one, plus_one_name } = req.body;
 
   if (!tag_uid || !name) {
@@ -444,6 +403,7 @@ app.post('/api/register', async (req, res) => {
 
 // ---- V1 Check-in (Legacy) ----
 app.post('/api/checkin', async (req, res) => {
+  await setupDatabase();
   const { tag_uid } = req.body;
   if (!tag_uid) return res.status(400).json({ error: 'tag_uid is required' });
 
@@ -467,6 +427,7 @@ app.post('/api/checkin', async (req, res) => {
 
 // ---- Admin: upload invite list (CSV: name,email,phone,plus_one) ----
 app.post('/api/admin/upload', upload.single('file'), async (req, res) => {
+  await setupDatabase();
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   let records;
@@ -496,6 +457,7 @@ app.post('/api/admin/upload', upload.single('file'), async (req, res) => {
 
 // ---- Admin: stats + guest list ----
 app.get('/api/admin/stats', async (req, res) => {
+  await setupDatabase();
   const invited = await sql`SELECT COUNT(*)::int AS count FROM invites`;
   const registered = await sql`SELECT COUNT(*)::int AS count FROM guests`;
   const checkedIn = await sql`SELECT COUNT(*)::int AS count FROM guests WHERE checked_in = true`;
@@ -509,6 +471,7 @@ app.get('/api/admin/stats', async (req, res) => {
 });
 
 app.get('/api/admin/guests', async (req, res) => {
+  await setupDatabase();
   const limit = req.query.limit ? parseInt(req.query.limit) : 1000;
   const guests = await sql`SELECT * FROM guests ORDER BY registered_at DESC LIMIT ${limit}`;
   res.json(guests);
@@ -549,6 +512,7 @@ app.get('/api/images', (req, res) => {
 
 // ---- Admin: audit logs ----
 app.get('/api/admin/audit-logs', async (req, res) => {
+  await setupDatabase();
   const logs = await sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100`;
   res.json(logs);
 });

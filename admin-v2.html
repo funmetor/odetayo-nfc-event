@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Timeless Sunday</title>
+<style>
+:root {
+  --mint: #1D9E75;
+  --tan: #8A6F45;
+  --cream: #F7F3EA;
+  --ink: #2A2620;
+  --muted: #7A7568;
+  --border: #E4DFD1;
+  --danger: #C0392B;
+  --gradient: linear-gradient(90deg, var(--mint) 0%, var(--tan) 100%);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+header {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.logo span {
+  color: var(--mint);
+}
+
+.nav-links {
+  display: flex;
+  gap: 16px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #666;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.nav-links a:hover, .nav-links a.active {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.stat-card .label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.stat-card .value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.stat-card.highlight .value {
+  color: var(--mint);
+}
+
+.section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #f0f0f0;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab.active {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.tab:hover:not(.active) {
+  background: #e0e0e0;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+td {
+  font-size: 14px;
+}
+
+tr:hover {
+  background: #f9f9f9;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-success {
+  background: #e7f5ef;
+  color: #136b4f;
+}
+
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-danger {
+  background: #fbeae8;
+  color: var(--danger);
+}
+
+.badge-info {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.image-upload-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.upload-card {
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.upload-card:hover {
+  border-color: var(--mint);
+  background: #f9fdf9;
+}
+
+.upload-card.has-image {
+  border-style: solid;
+  border-color: var(--mint);
+  background: #f9fdf9;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.upload-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.upload-subtitle {
+  font-size: 12px;
+  color: #888;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 150px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--gradient);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 158, 117, 0.3);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.search-box {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--mint);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+}
+
+.token-display {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: monospace;
+  font-size: 14px;
+  word-break: break-all;
+  margin: 12px 0;
+}
+
+.token-display .label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+  font-family: -apple-system, sans-serif;
+}
+
+.token-display .value {
+  color: var(--mint);
+  font-weight: 600;
+}
+
+.copy-btn {
+  background: var(--mint);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.copy-btn:hover {
+  background: #178a65;
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .section-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <div class="logo">Timeless <span>Sunday</span></div>
+    <nav class="nav-links">
+      <a href="#" class="active" onclick="showSection('dashboard')">Dashboard</a>
+      <a href="#" onclick="showSection('guests')">Guests</a>
+      <a href="#" onclick="showSection('images')">Images</a>
+      <a href="#" onclick="showSection('audit')">Audit Log</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Dashboard Section -->
+  <div id="dashboard-section">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Invited</div>
+        <div class="value" id="stat-invited">0</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="label">Registered</div>
+        <div class="value" id="stat-registered">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Checked In</div>
+        <div class="value" id="stat-checkedin">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Tokens Used</div>
+        <div class="value" id="stat-tokens">0</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Recent Registrations</h2>
+        <button class="btn btn-secondary" onclick="loadStats()">Refresh</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Registered</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recent-guests">
+            <tr><td colspan="6" style="text-align: center; color: #888;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guests Section -->
+  <div id="guests-section" style="display: none;">
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">All Guests</h2>
+        <div class="tabs">
+          <button class="tab active" onclick="filterGuests('all', this)">All</button>
+          <button class="tab" onclick="filterGuests('registered', this)">Registered</button>
+          <button class="tab" onclick="filterGuests('checked_in', this)">Checked In</button>
+        </div>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" class="search-input" id="searchGuests" placeholder="Search by name, email, or phone..." oninput="searchGuestList()">
+        <button class="btn btn-primary" onclick="exportCSV()">Export CSV</button>
+      </div>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Token</th>
+              <th>Status</th>
+              <th>Checked In</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="all-guests">
+            <tr><td colspan="7" style="text-align: center; color: #888;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Images Section -->
+  <div id="images-section" style="display: none;">
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Event Banner Images</h2>
+      </div>
+      
+      <div class="image-upload-section">
+        <div class="upload-card" id="scan-upload" onclick="triggerUpload('scan')">
+          <div class="upload-icon">📱</div>
+          <div class="upload-title">Scan Page Banner</div>
+          <div class="upload-subtitle">Image shown on scan.html</div>
+          <img id="scan-preview" class="image-preview" style="display: none;">
+          <input type="file" id="scan-file" accept="image/*" style="display: none;" onchange="handleImageUpload('scan')">
+        </div>
+        
+        <div class="upload-card" id="register-upload" onclick="triggerUpload('register')">
+          <div class="upload-icon">📝</div>
+          <div class="upload-title">Register Page Banner</div>
+          <div class="upload-subtitle">Image shown on register-v2.html</div>
+          <img id="register-preview" class="image-preview" style="display: none;">
+          <input type="file" id="register-file" accept="image/*" style="display: none;" onchange="handleImageUpload('register')">
+        </div>
+        
+        <div class="upload-card" id="checkin-upload" onclick="triggerUpload('checkin')">
+          <div class="upload-icon">✅</div>
+          <div class="upload-title">Check-in Page Banner</div>
+          <div class="upload-subtitle">Image shown on checkin-v2.html</div>
+          <img id="checkin-preview" class="image-preview" style="display: none;">
+          <input type="file" id="checkin-file" accept="image/*" style="display: none;" onchange="handleImageUpload('checkin')">
+        </div>
+      </div>
+      
+      <div style="margin-top: 20px; text-align: center;">
+        <button class="btn btn-primary" onclick="saveAllImages()">Save All Images</button>
+        <button class="btn btn-secondary" onclick="loadImages()" style="margin-left: 12px;">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Log Section -->
+  <div id="audit-section" style="display: none;">
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Audit Log</h2>
+        <button class="btn btn-secondary" onclick="loadAuditLogs()">Refresh</button>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" class="search-input" id="searchAudit" placeholder="Search logs..." oninput="searchAuditLogs()">
+      </div>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Event</th>
+              <th>Card Hash</th>
+              <th>Guest</th>
+              <th>IP Address</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="audit-logs">
+            <tr><td colspan="6" style="text-align: center; color: #888;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Token Modal -->
+<div class="modal" id="tokenModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Guest Token</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div id="tokenModalBody">
+      <!-- Token content will be inserted here -->
+    </div>
+  </div>
+</div>
+
+<script>
+let allGuestsData = [];
+let allAuditData = [];
+let currentFilter = 'all';
+
+// Navigation
+function showSection(section) {
+  document.querySelectorAll('[id$="-section"]').forEach(el => el.style.display = 'none');
+  document.getElementById(`${section}-section`).style.display = 'block';
+  
+  document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if (section === 'dashboard') loadStats();
+  if (section === 'guests') loadGuests();
+  if (section === 'images') loadImages();
+  if (section === 'audit') loadAuditLogs();
+}
+
+// Stats
+async function loadStats() {
+  try {
+    const res = await fetch('/api/admin/stats');
+    const data = await res.json();
+    
+    document.getElementById('stat-invited').textContent = data.invited || 0;
+    document.getElementById('stat-registered').textContent = data.registered || 0;
+    document.getElementById('stat-checkedin').textContent = data.checked_in || 0;
+    document.getElementById('stat-tokens').textContent = data.tokens_issued || 0;
+    
+    loadRecentGuests();
+  } catch (err) {
+    console.error('Failed to load stats:', err);
+  }
+}
+
+async function loadRecentGuests() {
+  try {
+    const res = await fetch('/api/admin/guests?limit=10');
+    const guests = await res.json();
+    
+    const tbody = document.getElementById('recent-guests');
+    if (guests.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">No guests yet</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = guests.map(g => `
+      <tr>
+        <td><strong>${g.name}</strong></td>
+        <td>${g.email || '-'}</td>
+        <td>${g.phone || '-'}</td>
+        <td><span class="badge ${getStatusBadge(g.status)}">${g.status || 'pending'}</span></td>
+        <td>${formatDate(g.registered_at)}</td>
+        <td>
+          <button class="btn btn-secondary" onclick="showToken('${g.token_hash || ''}', '${g.name}')" style="padding: 4px 12px; font-size: 12px;">View Token</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load guests:', err);
+  }
+}
+
+// Guests
+async function loadGuests() {
+  try {
+    const res = await fetch('/api/admin/guests');
+    allGuestsData = await res.json();
+    renderGuests(allGuestsData);
+  } catch (err) {
+    console.error('Failed to load guests:', err);
+  }
+}
+
+function renderGuests(guests) {
+  const filtered = currentFilter === 'all' 
+    ? guests 
+    : guests.filter(g => g.status === currentFilter || (currentFilter === 'checked_in' && g.checked_in));
+  
+  const tbody = document.getElementById('all-guests');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">No guests found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(g => `
+    <tr>
+      <td><strong>${g.name}</strong></td>
+      <td>${g.email || '-'}</td>
+      <td>${g.phone || '-'}</td>
+      <td><code style="font-size: 11px; background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">${g.token_hash ? g.token_hash.slice(0, 12) + '...' : '-'}</code></td>
+      <td><span class="badge ${getStatusBadge(g.status)}">${g.status || 'pending'}</span></td>
+      <td>${g.checked_in ? `<span class="badge badge-success">✓ ${formatDate(g.checked_in_at)}</span>` : '-'}</td>
+      <td>
+        <button class="btn btn-secondary" onclick="showToken('${g.token_hash || ''}', '${g.name}')" style="padding: 4px 12px; font-size: 12px;">Token</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterGuests(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderGuests(allGuestsData);
+}
+
+function searchGuestList() {
+  const query = document.getElementById('searchGuests').value.toLowerCase();
+  const filtered = allGuestsData.filter(g => 
+    g.name?.toLowerCase().includes(query) ||
+    g.email?.toLowerCase().includes(query) ||
+    g.phone?.includes(query)
+  );
+  renderGuests(filtered);
+}
+
+function exportCSV() {
+  const headers = ['Name', 'Email', 'Phone', 'Token Hash', 'Status', 'Registered At', 'Checked In', 'Checked In At'];
+  const rows = allGuestsData.map(g => [
+    g.name, g.email || '', g.phone || '', g.token_hash || '', g.status || '', g.registered_at, g.checked_in, g.checked_in_at || ''
+  ]);
+  
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `guests-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// Token Modal
+function showToken(tokenHash, guestName) {
+  const body = document.getElementById('tokenModalBody');
+  body.innerHTML = `
+    <p style="margin-bottom: 12px;"><strong>Guest:</strong> ${guestName}</p>
+    <div class="token-display">
+      <div class="label">Token Hash (SHA-256)</div>
+      <div class="value">${tokenHash || 'Not generated'}</div>
+    </div>
+    <p style="font-size: 12px; color: #888; margin-top: 12px;">
+      Note: The raw token is only sent to the guest via email. It is never stored in our database for security reasons.
+    </p>
+    <button class="copy-btn" onclick="copyToken('${tokenHash}')">Copy Token Hash</button>
+  `;
+  document.getElementById('tokenModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('tokenModal').classList.remove('show');
+}
+
+function copyToken(token) {
+  navigator.clipboard.writeText(token);
+  alert('Token hash copied to clipboard!');
+}
+
+// Images
+async function loadImages() {
+  try {
+    const res = await fetch('/api/admin/images');
+    const images = await res.json();
+    
+    Object.entries(images).forEach(([key, url]) => {
+      if (url) {
+        const preview = document.getElementById(`${key}-preview`);
+        const card = document.getElementById(`${key}-upload`);
+        if (preview) {
+          preview.src = url;
+          preview.style.display = 'block';
+          card.classList.add('has-image');
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Failed to load images:', err);
+  }
+}
+
+function triggerUpload(type) {
+  document.getElementById(`${type}-file`).click();
+}
+
+function handleImageUpload(type) {
+  const file = document.getElementById(`${type}-file`).files[0];
+  if (!file) return;
+  
+  const preview = document.getElementById(`${type}-preview`);
+  const card = document.getElementById(`${type}-upload`);
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    card.classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveAllImages() {
+  const types = ['scan', 'register', 'checkin'];
+  
+  for (const type of types) {
+    const file = document.getElementById(`${type}-file`).files[0];
+    if (!file) continue;
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('type', type);
+    
+    try {
+      await fetch('/api/admin/images', {
+        method: 'POST',
+        body: formData
+      });
+    } catch (err) {
+      console.error(`Failed to save ${type} image:`, err);
+    }
+  }
+  
+  alert('Images saved successfully!');
+  loadImages();
+}
+
+// Audit Logs
+async function loadAuditLogs() {
+  try {
+    const res = await fetch('/api/admin/audit-logs');
+    allAuditData = await res.json();
+    renderAuditLogs(allAuditData);
+  } catch (err) {
+    console.error('Failed to load audit logs:', err);
+  }
+}
+
+function renderAuditLogs(logs) {
+  const tbody = document.getElementById('audit-logs');
+  if (logs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">No audit logs yet</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = logs.map(log => `
+    <tr>
+      <td>${formatDate(log.created_at)}</td>
+      <td><span class="badge ${getEventBadge(log.event_type)}">${log.event_type}</span></td>
+      <td><code style="font-size: 11px;">${log.card_uid_hash ? log.card_uid_hash.slice(0, 16) + '...' : '-'}</code></td>
+      <td>${log.guest_id || '-'}</td>
+      <td>${log.ip_address || '-'}</td>
+      <td><code style="font-size: 11px;">${log.details ? JSON.stringify(log.details).slice(0, 50) : '-'}</code></td>
+    </tr>
+  `).join('');
+}
+
+function searchAuditLogs() {
+  const query = document.getElementById('searchAudit').value.toLowerCase();
+  const filtered = allAuditData.filter(log => 
+    log.event_type?.toLowerCase().includes(query) ||
+    log.card_uid_hash?.toLowerCase().includes(query) ||
+    log.ip_address?.includes(query)
+  );
+  renderAuditLogs(filtered);
+}
+
+// Helpers
+function getStatusBadge(status) {
+  const badges = {
+    'confirmed': 'badge-success',
+    'pending': 'badge-warning',
+    'cancelled': 'badge-danger'
+  };
+  return badges[status] || 'badge-info';
+}
+
+function getEventBadge(event) {
+  if (event.includes('registration')) return 'badge-success';
+  if (event.includes('checkin')) return 'badge-info';
+  if (event.includes('duplicate') || event.includes('already')) return 'badge-warning';
+  return 'badge-danger';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString();
+}
+
+// Close modal on outside click
+document.getElementById('tokenModal').addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal')) closeModal();
+});
+
+// Initial load
+loadStats();
+</script>
+</body>
+</html>

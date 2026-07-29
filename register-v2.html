@@ -627,14 +627,14 @@ function cancelRegistration() {
   }
 }
 
-// Get card_uid from URL parameters
+// Get token from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
-const cardUid = urlParams.get('card_uid');
+const token = urlParams.get('token');
 
-// Show card status if card_uid is present
-if (cardUid) {
+// Show token status if token is present
+if (token) {
   document.getElementById('formDescription').innerHTML = `
-    <span style="color: #00d4aa;">Card detected!</span> Please fill in your details to complete registration.
+    <span style="color: #00d4aa;">Token detected!</span> Please fill in your details to complete registration.
   `;
 }
 
@@ -649,8 +649,8 @@ async function submitRegistration() {
     return;
   }
   
-  if (!cardUid) {
-    showStatus('No card detected. Please scan your card first.', 'error');
+  if (!token) {
+    showStatus('No token detected. Please scan your card first.', 'error');
     return;
   }
   
@@ -662,7 +662,7 @@ async function submitRegistration() {
     const fullPhone = countryCode + phone;
     
     const guestData = {
-      card_uid: cardUid,
+      token: token,
       name,
       email: email || undefined,
       phone: fullPhone
@@ -682,12 +682,12 @@ async function submitRegistration() {
     localStorage.setItem('guestName', name);
     localStorage.setItem('guestEmail', email || '');
     localStorage.setItem('guestPhone', fullPhone);
-    localStorage.setItem('cardId', cardUid);
+    localStorage.setItem('token', token);
     
     showStatus('Registration successful! Redirecting...', 'success');
     
     setTimeout(() => {
-      window.location.href = `success.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(fullPhone)}&card_id=${encodeURIComponent(cardUid)}`;
+      window.location.href = `success.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(fullPhone)}&token=${encodeURIComponent(token)}`;
     }, 1500);
     
   } catch (err) {

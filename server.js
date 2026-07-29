@@ -13,6 +13,13 @@ const { sendWelcomeEmail } = require('./mailer');
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// ---- In-memory image storage (replace with database in production) ----
+const imageStorage = {
+  scan: null,
+  register: null,
+  checkin: null
+};
+
 // ---- Security Middleware ----
 app.use(helmet({
   contentSecurityPolicy: {
@@ -85,14 +92,14 @@ async function logAuditEvent(eventType, data) {
 
 // ---- Input Validation Schemas ----
 const registerSchema = z.object({
-  card_uid: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid card UID format'),
+  token: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid token format'),
   name: z.string().min(2).max(100).trim(),
   email: z.string().email('Invalid email format').optional().or(z.literal('')),
   phone: z.string().min(10).max(15).regex(/^\+?[0-9]+$/, 'Invalid phone format')
 });
 
 const checkinSchema = z.object({
-  card_uid: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid card UID format')
+  token: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid token format')
 });
 
 // ---- Invite list lookup (for plus-one eligibility) ----
@@ -157,7 +164,7 @@ app.get('/api/card/:uid/status', async (req, res) => {
   }
 });
 
-// ---- V2 Registration (NFC Card Flow) ----
+// ---- V2 Registration (NFC Token Flow) ----
 app.post('/api/register-v2', registrationLimiter, async (req, res) => {
   // Validate input
   const result = registerSchema.safeParse(req.body);
@@ -168,12 +175,12 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
     });
   }
   
-  const { card_uid, name, email, phone } = result.data;
-  const uidHash = hashCardUID(card_uid);
+  const { token, name, email, phone } = result.data;
+  const tokenHash = hashCardUID(token);
   
   try {
-    // Check if card is already registered
-    const existingCards = await sql`SELECT * FROM cards WHERE uid_hash = ${uidHash}`;
+    // Check if token is already registered
+    const existingCards = await sql`SELECT * FROM cards WHERE uid_hash = ${tokenHash}`;
     
     if (existingCards.length > 0) {
       const card = existingCards[0];
@@ -181,14 +188,14 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
       
       if (existingGuests.length > 0) {
         await logAuditEvent('registration_attempt_duplicate', {
-          card_uid_hash: uidHash,
+          card_uid_hash: tokenHash,
           ip_address: req.ip,
           user_agent: req.headers['user-agent'],
           details: { name, email }
         });
         
         return res.status(409).json({ 
-          error: 'This card is already registered',
+          error: 'This token is already registered',
           guest_name: existingGuests[0].name
         });
       }
@@ -203,7 +210,7 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
     } else {
       const newCard = await sql`
         INSERT INTO cards (uid_hash, status)
-        VALUES (${uidHash}, 'registered')
+        VALUES (${tokenHash}, 'registered')
         RETURNING id
       `;
       cardId = newCard[0].id;
@@ -219,17 +226,17 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
     
     // Log successful registration
     await logAuditEvent('registration', {
-      card_uid_hash: uidHash,
+      card_uid_hash: tokenHash,
       guest_id: guest.id,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
       details: { name, email, phone }
     });
     
-    // Send confirmation email
+    // Send confirmation email with token
     let emailResult = { sent: false };
     if (email) {
-      emailResult = await sendWelcomeEmail(guest, uidHash);
+      emailResult = await sendWelcomeEmail(guest, token);
     }
     
     res.json({ 
@@ -261,20 +268,20 @@ app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
     });
   }
   
-  const { card_uid } = result.data;
-  const uidHash = hashCardUID(card_uid);
+  const { token } = result.data;
+  const tokenHash = hashCardUID(token);
   
   try {
-    const cards = await sql`SELECT * FROM cards WHERE uid_hash = ${uidHash}`;
+    const cards = await sql`SELECT * FROM cards WHERE uid_hash = ${tokenHash}`;
     
     if (cards.length === 0) {
       await logAuditEvent('checkin_attempt_not_registered', {
-        card_uid_hash: uidHash,
+        card_uid_hash: tokenHash,
         ip_address: req.ip,
         user_agent: req.headers['user-agent']
       });
       
-      return res.json({ status: 'not_registered', card_uid });
+      return res.json({ status: 'not_registered', token });
     }
     
     const card = cards[0];
@@ -282,19 +289,19 @@ app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
     
     if (guests.length === 0) {
       await logAuditEvent('checkin_attempt_no_guest', {
-        card_uid_hash: uidHash,
+        card_uid_hash: tokenHash,
         ip_address: req.ip,
         user_agent: req.headers['user-agent']
       });
       
-      return res.json({ status: 'not_registered', card_uid });
+      return res.json({ status: 'not_registered', token });
     }
     
     const guest = guests[0];
     
     if (guest.checked_in) {
       await logAuditEvent('checkin_attempt_already_used', {
-        card_uid_hash: uidHash,
+        card_uid_hash: tokenHash,
         guest_id: guest.id,
         ip_address: req.ip,
         user_agent: req.headers['user-agent']
@@ -321,7 +328,7 @@ app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
     
     // Log successful check-in
     await logAuditEvent('checkin', {
-      card_uid_hash: uidHash,
+      card_uid_hash: tokenHash,
       guest_id: guest.id,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
@@ -428,16 +435,52 @@ app.get('/api/admin/stats', async (req, res) => {
   const invited = await sql`SELECT COUNT(*)::int AS count FROM invites`;
   const registered = await sql`SELECT COUNT(*)::int AS count FROM guests`;
   const checkedIn = await sql`SELECT COUNT(*)::int AS count FROM guests WHERE checked_in = true`;
+  const tokensIssued = await sql`SELECT COUNT(*)::int AS count FROM cards WHERE status != 'unused'`;
   res.json({
     invited: invited[0].count,
     registered: registered[0].count,
-    checked_in: checkedIn[0].count
+    checked_in: checkedIn[0].count,
+    tokens_issued: tokensIssued[0].count
   });
 });
 
 app.get('/api/admin/guests', async (req, res) => {
-  const guests = await sql`SELECT * FROM guests ORDER BY registered_at DESC`;
+  const limit = req.query.limit ? parseInt(req.query.limit) : 1000;
+  const guests = await sql`SELECT * FROM guests ORDER BY registered_at DESC LIMIT ${limit}`;
   res.json(guests);
+});
+
+// ---- Admin: images ----
+app.get('/api/admin/images', (req, res) => {
+  res.json(imageStorage);
+});
+
+app.post('/api/admin/images', upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+  
+  const type = req.body.type;
+  if (!['scan', 'register', 'checkin'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid image type' });
+  }
+  
+  const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+  imageStorage[type] = base64;
+  
+  res.json({ success: true, type });
+});
+
+// ---- Admin: get images for public pages ----
+app.get('/api/images/:type', (req, res) => {
+  const type = req.params.type;
+  if (!['scan', 'register', 'checkin'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid image type' });
+  }
+  res.json({ url: imageStorage[type] });
+});
+
+// ---- Admin: get all images ----
+app.get('/api/images', (req, res) => {
+  res.json(imageStorage);
 });
 
 // ---- Admin: audit logs ----

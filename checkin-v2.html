@@ -458,7 +458,7 @@ body {
 
     <div class="input-group">
       <span class="input-icon">🪪</span>
-      <input type="text" class="input-field" id="tag_uid" placeholder="Enter Card ID (e.g. 04:A2:1F:9C)">
+      <input type="text" class="input-field" id="tag_uid" placeholder="Enter Token (e.g. 04:A2:1F:9C)">
     </div>
 
     <button class="btn btn-primary" id="checkinBtn" onclick="checkIn()">Check in</button>
@@ -515,9 +515,9 @@ function showStatus(message, type) {
 }
 
 async function checkIn() {
-  const card_uid = document.getElementById('tag_uid').value.trim();
-  if (!card_uid) {
-    showStatus('Please enter a Card ID or scan a card', 'error');
+  const token = document.getElementById('tag_uid').value.trim();
+  if (!token) {
+    showStatus('Please enter a Token or scan a card', 'error');
     return;
   }
 
@@ -529,7 +529,7 @@ async function checkIn() {
     const res = await fetch('/api/checkin-v2', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ card_uid })
+      body: JSON.stringify({ token })
     });
     const data = await res.json();
 

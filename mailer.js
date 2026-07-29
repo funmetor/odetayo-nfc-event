@@ -12,7 +12,7 @@ function getTransporter() {
   });
 }
 
-async function sendWelcomeEmail(guest, cardUidHash) {
+async function sendWelcomeEmail(guest, rawToken) {
   const transporter = getTransporter();
   if (!transporter) {
     console.log(`[mailer] SMTP not configured — skipping email to ${guest.email}`);
@@ -21,10 +21,8 @@ async function sendWelcomeEmail(guest, cardUidHash) {
 
   const fromAddress = process.env.FROM_EMAIL || process.env.SMTP_USER;
   
-  // Create masked card ID (show first 8 and last 4 characters)
-  const maskedCardId = cardUidHash 
-    ? `${cardUidHash.slice(0, 8)}...${cardUidHash.slice(-4)}`
-    : 'N/A';
+  // Display token in email (this is the raw token the user needs to present)
+  const displayToken = rawToken || 'N/A';
 
   try {
     await transporter.sendMail({
@@ -44,8 +42,9 @@ async function sendWelcomeEmail(guest, cardUidHash) {
             </p>
             
             <div style="background: #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-              <p style="color: #888; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Your Card ID</p>
-              <p style="color: #00d4aa; font-size: 16px; font-family: monospace; margin: 0; font-weight: 600;">${maskedCardId}</p>
+              <p style="color: #888; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Your Token</p>
+              <p style="color: #00d4aa; font-size: 16px; font-family: monospace; margin: 0; font-weight: 600;">${displayToken}</p>
+              <p style="color: #888; font-size: 11px; margin: 8px 0 0;">Present this token at the event entrance for check-in</p>
             </div>
             
             <div style="background: #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 20px;">

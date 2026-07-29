@@ -312,23 +312,23 @@ async function startScan() {
   }
 }
 
-function handleCardStatus(data, cardUid) {
+function handleCardStatus(data, token) {
   const text = document.getElementById('scanText');
   
   switch (data.status) {
     case 'unused':
-      // Card not registered - redirect to registration
-      text.textContent = 'New Card Detected';
-      showStatus('Card not registered. Redirecting to registration...', 'success');
+      // Token not registered - redirect to registration
+      text.textContent = 'New Token Detected';
+      showStatus('Token not registered. Redirecting to registration...', 'success');
       setTimeout(() => {
-        window.location.href = `register-v2.html?card_uid=${encodeURIComponent(cardUid)}`;
+        window.location.href = `register-v2.html?token=${encodeURIComponent(token)}`;
       }, 1500);
       break;
       
     case 'registered':
       // Already registered - show message
       text.textContent = 'Already Registered';
-      showStatus(`This card is already registered to ${data.guest_name}. Please wait until the event day to use it for check-in.`, 'error');
+      showStatus(`This token is already registered to ${data.guest_name}. Please wait until the event day to use it for check-in.`, 'error');
       setTimeout(resetUI, 3000);
       break;
       
@@ -341,7 +341,7 @@ function handleCardStatus(data, cardUid) {
       
     default:
       text.textContent = 'Error';
-      showStatus('Unknown card status. Please try again.', 'error');
+      showStatus('Unknown token status. Please try again.', 'error');
       setTimeout(resetUI, 3000);
   }
 }

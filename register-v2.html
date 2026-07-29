@@ -29,7 +29,7 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-  background: #121212;
+  background: #0a0a0a;
   color: #ffffff;
   min-height: 100vh;
   min-height: -webkit-fill-available;
@@ -37,6 +37,18 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.mobile-container {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background: #121212;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
 }
 
 .header {
@@ -74,6 +86,7 @@ body {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .event-banner::before {
@@ -410,6 +423,10 @@ body {
 }
 
 @media screen and (max-width: 375px) {
+  .mobile-container {
+    box-shadow: none;
+  }
+  
   .event-title {
     font-size: 36px;
   }
@@ -426,24 +443,25 @@ body {
 </head>
 <body>
 
-<header class="header">
-  <button class="back-btn" onclick="history.back()">←</button>
-  <h1 class="header-title">Event details</h1>
-</header>
+<div class="mobile-container">
+  <header class="header">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <h1 class="header-title">Event details</h1>
+  </header>
 
-<div class="event-banner">
-  <div class="event-banner-content">
-    <div class="event-title">Timeless</div>
-    <div class="event-subtitle">Sunday</div>
-    <div class="event-date">
-      <span class="event-date-box">26TH APR</span>
-      <span>Epe &amp; Lekki Phase 1</span>
-      <span>2pm</span>
+  <div class="event-banner">
+    <div class="event-banner-content">
+      <div class="event-title">Timeless</div>
+      <div class="event-subtitle">Sunday</div>
+      <div class="event-date">
+        <span class="event-date-box">26TH APR</span>
+        <span>Epe &amp; Lekki Phase 1</span>
+        <span>2pm</span>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="form-container">
+  <div class="form-container">
   <div class="form-header">
     <h2 class="form-title">Who's attending?</h2>
     <button class="close-btn" onclick="history.back()">×</button>
@@ -503,6 +521,7 @@ body {
       <button type="button" class="btn btn-confirm" id="confirmBtn" onclick="submitRegistration()">Confirm</button>
     </div>
   </form>
+</div>
 </div>
 
 <script>

@@ -1,8 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { parse } = require('csv-parse/sync');
-const path = require('path');
-const db = require('./db');
+const { sql } = require('./db');
 const { sendWelcomeEmail } = require('./mailer');
 
 const app = express();
@@ -12,13 +11,14 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // ---- Invite list lookup (for plus-one eligibility) ----
-app.get('/api/invites/search', (req, res) => {
+app.get('/api/invites/search', async (req, res) => {
   const q = (req.query.q || '').toLowerCase().trim();
   if (!q) return res.json([]);
-  const matches = db.get('invites')
-    .filter(i => i.name.toLowerCase().includes(q))
-    .value()
-    .slice(0, 8);
+  const matches = await sql`
+    SELECT * FROM invites
+    WHERE LOWER(name) LIKE '%' || ${q} || '%'
+    LIMIT 8
+  `;
   res.json(matches);
 });
 
@@ -30,78 +30,17 @@ app.post('/api/register', async (req, res) => {
     return res.status(400).json({ error: 'tag_uid and name are required' });
   }
 
-  const existing = db.get('guests').find({ tag_uid }).value();
-  if (existing) {
-    return res.status(409).json({ error: 'This card is already registered', guest: existing });
+  const existing = await sql`SELECT * FROM guests WHERE tag_uid = ${tag_uid}`;
+  if (existing.length > 0) {
+    return res.status(409).json({ error: 'This card is already registered', guest: existing[0] });
   }
 
-  const guest = {
-    tag_uid,
-    name,
-    email: email || null,
-    phone: phone || null,
-    plus_one: !!plus_one,
-    plus_one_name: plus_one ? (plus_one_name || null) : null,
-    registered_at: new Date().toISOString(),
-    checked_in: false,
-    checked_in_at: null
-  };
-
-  db.get('guests').push(guest).write();
-
-  let emailResult = { sent: false };
-  if (email) {
-    emailResult = await sendWelcomeEmail(guest);
-  }
-
-  res.json({ success: true, guest, email: emailResult });
-});
-
-// ---- V2 Registration (No NFC card required) ----
-app.post('/api/register-v2', async (req, res) => {
-  const { name, email, phone, guests: additionalGuests } = req.body;
-
-  if (!name) {
-    return res.status(400).json({ error: 'Name is required' });
-  }
-
-  // Generate a unique ID for this registration
-  const tag_uid = 'V2-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-
-  const guest = {
-    tag_uid,
-    name,
-    email: email || null,
-    phone: phone || null,
-    plus_one: additionalGuests && additionalGuests.length > 0,
-    plus_one_name: additionalGuests && additionalGuests.length > 0 ? additionalGuests.map(g => g.name).join(', ') : null,
-    registered_at: new Date().toISOString(),
-    checked_in: false,
-    checked_in_at: null
-  };
-
-  db.get('guests').push(guest).write();
-
-  // Register additional guests if provided
-  if (additionalGuests && additionalGuests.length > 0) {
-    for (const additionalGuest of additionalGuests) {
-      if (additionalGuest.name) {
-        const additionalGuestUid = 'V2-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        const additionalGuestData = {
-          tag_uid: additionalGuestUid,
-          name: additionalGuest.name,
-          email: additionalGuest.email || null,
-          phone: null,
-          plus_one: false,
-          plus_one_name: null,
-          registered_at: new Date().toISOString(),
-          checked_in: false,
-          checked_in_at: null
-        };
-        db.get('guests').push(additionalGuestData).write();
-      }
-    }
-  }
+  const rows = await sql`
+    INSERT INTO guests (tag_uid, name, email, phone, plus_one, plus_one_name)
+    VALUES (${tag_uid}, ${name}, ${email || null}, ${phone || null}, ${!!plus_one}, ${plus_one ? (plus_one_name || null) : null})
+    RETURNING *
+  `;
+  const guest = rows[0];
 
   let emailResult = { sent: false };
   if (email) {
@@ -112,31 +51,30 @@ app.post('/api/register-v2', async (req, res) => {
 });
 
 // ---- Check-in ----
-app.post('/api/checkin', (req, res) => {
+app.post('/api/checkin', async (req, res) => {
   const { tag_uid } = req.body;
   if (!tag_uid) return res.status(400).json({ error: 'tag_uid is required' });
 
-  const guest = db.get('guests').find({ tag_uid }).value();
+  const rows = await sql`SELECT * FROM guests WHERE tag_uid = ${tag_uid}`;
 
-  if (!guest) {
+  if (rows.length === 0) {
     return res.json({ status: 'not_registered', tag_uid });
   }
 
-  if (guest.checked_in) {
-    return res.json({ status: 'already_used', guest });
+  if (rows[0].checked_in) {
+    return res.json({ status: 'already_used', guest: rows[0] });
   }
 
-  db.get('guests').find({ tag_uid }).assign({
-    checked_in: true,
-    checked_in_at: new Date().toISOString()
-  }).write();
-
-  const updated = db.get('guests').find({ tag_uid }).value();
-  res.json({ status: 'granted', guest: updated });
+  const updated = await sql`
+    UPDATE guests SET checked_in = true, checked_in_at = NOW()
+    WHERE tag_uid = ${tag_uid}
+    RETURNING *
+  `;
+  res.json({ status: 'granted', guest: updated[0] });
 });
 
 // ---- Admin: upload invite list (CSV: name,email,phone,plus_one) ----
-app.post('/api/admin/upload', upload.single('file'), (req, res) => {
+app.post('/api/admin/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   let records;
@@ -153,23 +91,32 @@ app.post('/api/admin/upload', upload.single('file'), (req, res) => {
     plus_one_eligible: String(r.plus_one).trim().toUpperCase() === 'TRUE'
   })).filter(r => r.name);
 
-  db.set('invites', invites).write();
+  await sql`DELETE FROM invites`;
+  for (const inv of invites) {
+    await sql`
+      INSERT INTO invites (name, email, phone, plus_one_eligible)
+      VALUES (${inv.name}, ${inv.email}, ${inv.phone}, ${inv.plus_one_eligible})
+    `;
+  }
+
   res.json({ success: true, count: invites.length });
 });
 
 // ---- Admin: stats + guest list ----
-app.get('/api/admin/stats', (req, res) => {
-  const invites = db.get('invites').value();
-  const guests = db.get('guests').value();
+app.get('/api/admin/stats', async (req, res) => {
+  const invited = await sql`SELECT COUNT(*)::int AS count FROM invites`;
+  const registered = await sql`SELECT COUNT(*)::int AS count FROM guests`;
+  const checkedIn = await sql`SELECT COUNT(*)::int AS count FROM guests WHERE checked_in = true`;
   res.json({
-    invited: invites.length,
-    registered: guests.length,
-    checked_in: guests.filter(g => g.checked_in).length
+    invited: invited[0].count,
+    registered: registered[0].count,
+    checked_in: checkedIn[0].count
   });
 });
 
-app.get('/api/admin/guests', (req, res) => {
-  res.json(db.get('guests').value());
+app.get('/api/admin/guests', async (req, res) => {
+  const guests = await sql`SELECT * FROM guests ORDER BY registered_at DESC`;
+  res.json(guests);
 });
 
 if (process.env.VERCEL !== '1') {

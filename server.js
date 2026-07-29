@@ -1,5 +1,11 @@
 const express = require('express');
 const multer = require('multer');
+const helmet = require('helmet');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
+const { z } = require('zod');
 const { parse } = require('csv-parse/sync');
 const { sql } = require('./db');
 const { sendWelcomeEmail } = require('./mailer');
@@ -7,8 +13,87 @@ const { sendWelcomeEmail } = require('./mailer');
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.use(express.json());
+// ---- Security Middleware ----
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"]
+    }
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true }
+}));
+
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGIN || '*',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'X-CSRF-Token']
+}));
+
+app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 app.use(express.static(__dirname));
+
+// ---- Rate Limiters ----
+const registrationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { error: 'Too many registration attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const checkinLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 3,
+  message: { error: 'Too many check-in attempts. Please try again.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests. Please try again later.' }
+});
+
+app.use('/api/', generalLimiter);
+
+// ---- Card UID Hashing ----
+const CARD_SALT = process.env.CARD_SALT || crypto.randomBytes(32).toString('hex');
+
+function hashCardUID(uid) {
+  return crypto.createHash('sha256')
+    .update(uid.toUpperCase().trim() + CARD_SALT)
+    .digest('hex');
+}
+
+// ---- Audit Logging ----
+async function logAuditEvent(eventType, data) {
+  try {
+    await sql`
+      INSERT INTO audit_logs (event_type, card_uid_hash, guest_id, ip_address, user_agent, details)
+      VALUES (${eventType}, ${data.card_uid_hash || null}, ${data.guest_id || null}, ${data.ip_address || null}, ${data.user_agent || null}, ${JSON.stringify(data.details || {})}::jsonb)
+    `;
+  } catch (err) {
+    console.error('Audit log error:', err);
+  }
+}
+
+// ---- Input Validation Schemas ----
+const registerSchema = z.object({
+  card_uid: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid card UID format'),
+  name: z.string().min(2).max(100).trim(),
+  email: z.string().email('Invalid email format').optional().or(z.literal('')),
+  phone: z.string().min(10).max(15).regex(/^\+?[0-9]+$/, 'Invalid phone format')
+});
+
+const checkinSchema = z.object({
+  card_uid: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid card UID format')
+});
 
 // ---- Invite list lookup (for plus-one eligibility) ----
 app.get('/api/invites/search', async (req, res) => {
@@ -22,7 +107,243 @@ app.get('/api/invites/search', async (req, res) => {
   res.json(matches);
 });
 
-// ---- Registration ----
+// ---- Card Status Check ----
+app.get('/api/card/:uid/status', async (req, res) => {
+  const uid = req.params.uid;
+  
+  if (!uid || !/^[A-F0-9:]+$/i.test(uid)) {
+    return res.status(400).json({ error: 'Invalid card UID format' });
+  }
+  
+  const uidHash = hashCardUID(uid);
+  
+  try {
+    const cards = await sql`SELECT * FROM cards WHERE uid_hash = ${uidHash}`;
+    
+    if (cards.length === 0) {
+      return res.json({ status: 'unused', card_uid: uid });
+    }
+    
+    const card = cards[0];
+    
+    // Get guest info if registered
+    const guests = await sql`SELECT * FROM guests WHERE card_id = ${card.id}`;
+    
+    if (guests.length === 0) {
+      return res.json({ status: card.status, card_uid: uid });
+    }
+    
+    const guest = guests[0];
+    
+    if (guest.checked_in) {
+      return res.json({ 
+        status: 'checked_in', 
+        card_uid: uid,
+        guest_name: guest.name,
+        checked_in_at: guest.checked_in_at
+      });
+    }
+    
+    return res.json({ 
+      status: 'registered', 
+      card_uid: uid,
+      guest_name: guest.name,
+      email: guest.email
+    });
+    
+  } catch (err) {
+    console.error('Card status error:', err);
+    res.status(500).json({ error: 'Failed to check card status' });
+  }
+});
+
+// ---- V2 Registration (NFC Card Flow) ----
+app.post('/api/register-v2', registrationLimiter, async (req, res) => {
+  // Validate input
+  const result = registerSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ 
+      error: 'Invalid input', 
+      details: result.error.issues.map(i => i.message)
+    });
+  }
+  
+  const { card_uid, name, email, phone } = result.data;
+  const uidHash = hashCardUID(card_uid);
+  
+  try {
+    // Check if card is already registered
+    const existingCards = await sql`SELECT * FROM cards WHERE uid_hash = ${uidHash}`;
+    
+    if (existingCards.length > 0) {
+      const card = existingCards[0];
+      const existingGuests = await sql`SELECT * FROM guests WHERE card_id = ${card.id}`;
+      
+      if (existingGuests.length > 0) {
+        await logAuditEvent('registration_attempt_duplicate', {
+          card_uid_hash: uidHash,
+          ip_address: req.ip,
+          user_agent: req.headers['user-agent'],
+          details: { name, email }
+        });
+        
+        return res.status(409).json({ 
+          error: 'This card is already registered',
+          guest_name: existingGuests[0].name
+        });
+      }
+    }
+    
+    // Create or get card record
+    let cardId;
+    if (existingCards.length > 0) {
+      cardId = existingCards[0].id;
+      // Update card status
+      await sql`UPDATE cards SET status = 'registered' WHERE id = ${cardId}`;
+    } else {
+      const newCard = await sql`
+        INSERT INTO cards (uid_hash, status)
+        VALUES (${uidHash}, 'registered')
+        RETURNING id
+      `;
+      cardId = newCard[0].id;
+    }
+    
+    // Create guest record
+    const guests = await sql`
+      INSERT INTO guests (card_id, name, email, phone, status)
+      VALUES (${cardId}, ${name}, ${email || null}, ${phone}, 'confirmed')
+      RETURNING *
+    `;
+    const guest = guests[0];
+    
+    // Log successful registration
+    await logAuditEvent('registration', {
+      card_uid_hash: uidHash,
+      guest_id: guest.id,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      details: { name, email, phone }
+    });
+    
+    // Send confirmation email
+    let emailResult = { sent: false };
+    if (email) {
+      emailResult = await sendWelcomeEmail(guest, uidHash);
+    }
+    
+    res.json({ 
+      success: true, 
+      guest: {
+        id: guest.id,
+        name: guest.name,
+        email: guest.email,
+        phone: guest.phone,
+        status: guest.status
+      },
+      email: emailResult
+    });
+    
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  }
+});
+
+// ---- V2 Check-in ----
+app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
+  // Validate input
+  const result = checkinSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ 
+      error: 'Invalid input', 
+      details: result.error.issues.map(i => i.message)
+    });
+  }
+  
+  const { card_uid } = result.data;
+  const uidHash = hashCardUID(card_uid);
+  
+  try {
+    const cards = await sql`SELECT * FROM cards WHERE uid_hash = ${uidHash}`;
+    
+    if (cards.length === 0) {
+      await logAuditEvent('checkin_attempt_not_registered', {
+        card_uid_hash: uidHash,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent']
+      });
+      
+      return res.json({ status: 'not_registered', card_uid });
+    }
+    
+    const card = cards[0];
+    const guests = await sql`SELECT * FROM guests WHERE card_id = ${card.id}`;
+    
+    if (guests.length === 0) {
+      await logAuditEvent('checkin_attempt_no_guest', {
+        card_uid_hash: uidHash,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent']
+      });
+      
+      return res.json({ status: 'not_registered', card_uid });
+    }
+    
+    const guest = guests[0];
+    
+    if (guest.checked_in) {
+      await logAuditEvent('checkin_attempt_already_used', {
+        card_uid_hash: uidHash,
+        guest_id: guest.id,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent']
+      });
+      
+      return res.json({ 
+        status: 'already_used', 
+        guest: {
+          name: guest.name,
+          checked_in_at: guest.checked_in_at
+        }
+      });
+    }
+    
+    // Perform check-in
+    const updated = await sql`
+      UPDATE guests SET checked_in = true, checked_in_at = NOW()
+      WHERE id = ${guest.id}
+      RETURNING *
+    `;
+    
+    // Update card status
+    await sql`UPDATE cards SET status = 'checked_in' WHERE id = ${card.id}`;
+    
+    // Log successful check-in
+    await logAuditEvent('checkin', {
+      card_uid_hash: uidHash,
+      guest_id: guest.id,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      details: { name: guest.name }
+    });
+    
+    res.json({ 
+      status: 'granted', 
+      guest: {
+        name: updated[0].name,
+        plus_one: updated[0].plus_one,
+        plus_one_name: updated[0].plus_one_name
+      }
+    });
+    
+  } catch (err) {
+    console.error('Check-in error:', err);
+    res.status(500).json({ error: 'Check-in failed. Please try again.' });
+  }
+});
+
+// ---- V1 Registration (Legacy) ----
 app.post('/api/register', async (req, res) => {
   const { tag_uid, name, email, phone, plus_one, plus_one_name } = req.body;
 
@@ -50,7 +371,7 @@ app.post('/api/register', async (req, res) => {
   res.json({ success: true, guest, email: emailResult });
 });
 
-// ---- Check-in ----
+// ---- V1 Check-in (Legacy) ----
 app.post('/api/checkin', async (req, res) => {
   const { tag_uid } = req.body;
   if (!tag_uid) return res.status(400).json({ error: 'tag_uid is required' });
@@ -117,6 +438,12 @@ app.get('/api/admin/stats', async (req, res) => {
 app.get('/api/admin/guests', async (req, res) => {
   const guests = await sql`SELECT * FROM guests ORDER BY registered_at DESC`;
   res.json(guests);
+});
+
+// ---- Admin: audit logs ----
+app.get('/api/admin/audit-logs', async (req, res) => {
+  const logs = await sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100`;
+  res.json(logs);
 });
 
 if (process.env.VERCEL !== '1') {

@@ -467,7 +467,7 @@ body {
     <button class="close-btn" onclick="history.back()">×</button>
   </div>
   
-  <p class="form-description">
+  <p class="form-description" id="formDescription">
     Please enter the detail(s) for your purchase. You may add up guests, however the number of tickets determines number of guest you can add.
   </p>
 
@@ -627,6 +627,17 @@ function cancelRegistration() {
   }
 }
 
+// Get card_uid from URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const cardUid = urlParams.get('card_uid');
+
+// Show card status if card_uid is present
+if (cardUid) {
+  document.getElementById('formDescription').innerHTML = `
+    <span style="color: #00d4aa;">Card detected!</span> Please fill in your details to complete registration.
+  `;
+}
+
 async function submitRegistration() {
   const name = document.getElementById('fullName').value.trim();
   const phone = document.getElementById('phone').value.trim();
@@ -638,6 +649,11 @@ async function submitRegistration() {
     return;
   }
   
+  if (!cardUid) {
+    showStatus('No card detected. Please scan your card first.', 'error');
+    return;
+  }
+  
   const btn = document.getElementById('confirmBtn');
   btn.disabled = true;
   btn.textContent = 'Confirming...';
@@ -646,10 +662,10 @@ async function submitRegistration() {
     const fullPhone = countryCode + phone;
     
     const guestData = {
+      card_uid: cardUid,
       name,
-      email: email || null,
-      phone: fullPhone,
-      guests: guests.filter(g => g.name)
+      email: email || undefined,
+      phone: fullPhone
     };
     
     const res = await fetch('/api/register-v2', {
@@ -662,11 +678,17 @@ async function submitRegistration() {
     
     if (!res.ok) throw new Error(data.error || 'Registration failed');
     
-    showStatus('Registration successful! You will receive a confirmation shortly.', 'success');
+    // Store registration details for success page
+    localStorage.setItem('guestName', name);
+    localStorage.setItem('guestEmail', email || '');
+    localStorage.setItem('guestPhone', fullPhone);
+    localStorage.setItem('cardId', cardUid);
+    
+    showStatus('Registration successful! Redirecting...', 'success');
     
     setTimeout(() => {
-      window.location.href = 'success.html';
-    }, 2000);
+      window.location.href = `success.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(fullPhone)}&card_id=${encodeURIComponent(cardUid)}`;
+    }, 1500);
     
   } catch (err) {
     showStatus(err.message, 'error');

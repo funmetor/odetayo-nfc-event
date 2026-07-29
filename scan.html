@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#121212">
+<title>Scan Card — Timeless Sunday</title>
+<style>
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: -webkit-fill-available; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  background: #0a0a0a;
+  color: #ffffff;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-container {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background: #121212;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: calc(var(--safe-top) + 12px) 16px 12px;
+  background: #1a1a1a;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 12px;
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px calc(var(--safe-bottom) + 24px);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+
+.scan-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.nfc-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1D9E75, #00d4aa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  margin-bottom: 24px;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 40px rgba(0, 212, 170, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.scan-text {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.scan-subtext {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  max-width: 280px;
+}
+
+.status-box {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+  width: 100%;
+  display: none;
+}
+
+.status-box.show {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.status-success {
+  background: rgba(29, 158, 117, 0.15);
+  color: #00d4aa;
+  border: 1px solid rgba(0, 212, 170, 0.3);
+}
+
+.status-error {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.status-info {
+  background: rgba(100, 100, 100, 0.15);
+  color: #aaa;
+  border: 1px solid rgba(100, 100, 100, 0.3);
+}
+
+.btn {
+  width: 100%;
+  padding: 18px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  margin-top: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1D9E75, #00d4aa);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 212, 170, 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.btn-secondary:active {
+  background: #333;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  display: none;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media screen and (max-width: 375px) {
+  .mobile-container { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="mobile-container">
+  <header class="header">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <h1 class="header-title">Timeless Sunday</h1>
+  </header>
+
+  <div class="content">
+    <h1 class="title">Scan Your Card</h1>
+    <p class="subtitle">Hold your NFC card near your phone to register or check in.</p>
+
+    <div class="scan-area">
+      <div class="nfc-icon">📡</div>
+      <p class="scan-text" id="scanText">Ready to Scan</p>
+      <p class="scan-subtext" id="scanSubtext">Tap the button below and hold your card near your phone</p>
+    </div>
+
+    <div class="status-box" id="statusBox"></div>
+    <div class="loading-spinner" id="loadingSpinner"></div>
+
+    <button class="btn btn-primary" id="scanBtn" onclick="startScan()">Scan Card</button>
+    <button class="btn btn-secondary" id="manualBtn" onclick="showManualInput()" style="display: none;">Enter Card ID Manually</button>
+
+    <div id="manualInput" style="display: none; margin-top: 16px;">
+      <input type="text" id="manualCardId" placeholder="Enter Card ID (e.g., 04:A2:1F:9C)" 
+        style="width: 100%; padding: 16px; background: #2a2a2a; border: 1px solid #333; border-radius: 14px; color: #fff; font-size: 16px;">
+      <button class="btn btn-primary" onclick="submitManualCard()" style="margin-top: 12px;">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let nfcSupported = 'NDEFReader' in window;
+let scanning = false;
+
+// Show manual input option if NFC not supported
+if (!nfcSupported) {
+  document.getElementById('manualBtn').style.display = 'block';
+  document.getElementById('scanSubtext').textContent = 'NFC is not supported on this device. Use manual input.';
+}
+
+async function startScan() {
+  if (scanning) return;
+  
+  const btn = document.getElementById('scanBtn');
+  const text = document.getElementById('scanText');
+  const subtext = document.getElementById('scanSubtext');
+  
+  if (!nfcSupported) {
+    showStatus('NFC not supported. Please enter card ID manually.', 'error');
+    document.getElementById('manualBtn').style.display = 'block';
+    return;
+  }
+  
+  try {
+    scanning = true;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner" style="display: inline-block;"></div> Scanning...';
+    text.textContent = 'Scanning...';
+    subtext.textContent = 'Hold your card near your phone';
+    
+    const reader = new NDEFReader();
+    await reader.scan();
+    
+    reader.onreading = async (event) => {
+      const cardUid = event.serialNumber;
+      showStatus('Card detected! Checking status...', 'info');
+      
+      try {
+        const response = await fetch(`/api/card/${encodeURIComponent(cardUid)}/status`);
+        const data = await response.json();
+        
+        handleCardStatus(data, cardUid);
+      } catch (err) {
+        showStatus('Failed to check card status. Please try again.', 'error');
+        resetUI();
+      }
+    };
+    
+    reader.onreadingerror = () => {
+      showStatus('Could not read card. Please try again.', 'error');
+      resetUI();
+    };
+    
+  } catch (err) {
+    showStatus('Could not start NFC scan: ' + err.message, 'error');
+    resetUI();
+    document.getElementById('manualBtn').style.display = 'block';
+  }
+}
+
+function handleCardStatus(data, cardUid) {
+  const text = document.getElementById('scanText');
+  
+  switch (data.status) {
+    case 'unused':
+      // Card not registered - redirect to registration
+      text.textContent = 'New Card Detected';
+      showStatus('Card not registered. Redirecting to registration...', 'success');
+      setTimeout(() => {
+        window.location.href = `register-v2.html?card_uid=${encodeURIComponent(cardUid)}`;
+      }, 1500);
+      break;
+      
+    case 'registered':
+      // Already registered - show message
+      text.textContent = 'Already Registered';
+      showStatus(`This card is already registered to ${data.guest_name}. Please wait until the event day to use it for check-in.`, 'error');
+      setTimeout(resetUI, 3000);
+      break;
+      
+    case 'checked_in':
+      // Already checked in
+      text.textContent = 'Already Checked In';
+      showStatus(`${data.guest_name} has already checked in at ${new Date(data.checked_in_at).toLocaleTimeString()}.`, 'error');
+      setTimeout(resetUI, 3000);
+      break;
+      
+    default:
+      text.textContent = 'Error';
+      showStatus('Unknown card status. Please try again.', 'error');
+      setTimeout(resetUI, 3000);
+  }
+}
+
+function showManualInput() {
+  document.getElementById('manualInput').style.display = 'block';
+  document.getElementById('manualBtn').style.display = 'none';
+  document.getElementById('manualCardId').focus();
+}
+
+async function submitManualCard() {
+  const cardUid = document.getElementById('manualCardId').value.trim();
+  if (!cardUid) {
+    showStatus('Please enter a card ID', 'error');
+    return;
+  }
+  
+  const spinner = document.getElementById('loadingSpinner');
+  spinner.style.display = 'block';
+  
+  try {
+    const response = await fetch(`/api/card/${encodeURIComponent(cardUid)}/status`);
+    const data = await response.json();
+    
+    handleCardStatus(data, cardUid);
+  } catch (err) {
+    showStatus('Failed to check card status. Please try again.', 'error');
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function showStatus(message, type) {
+  const box = document.getElementById('statusBox');
+  box.textContent = message;
+  box.className = `status-box show status-${type}`;
+}
+
+function resetUI() {
+  scanning = false;
+  const btn = document.getElementById('scanBtn');
+  const text = document.getElementById('scanText');
+  const subtext = document.getElementById('scanSubtext');
+  
+  btn.disabled = false;
+  btn.textContent = 'Scan Card';
+  text.textContent = 'Ready to Scan';
+  subtext.textContent = 'Tap the button below and hold your card near your phone';
+  document.getElementById('statusBox').className = 'status-box';
+}
+</script>
+</body>
+</html>

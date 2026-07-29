@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#121212">
+<title>Registration Successful — Timeless Sunday</title>
+<style>
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: -webkit-fill-available; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  background: #0a0a0a;
+  color: #ffffff;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-container {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background: #121212;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px calc(var(--safe-bottom) + 24px);
+  text-align: center;
+}
+
+.success-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1D9E75, #00d4aa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  margin-bottom: 24px;
+  animation: bounceIn 0.6s ease;
+  box-shadow: 0 0 40px rgba(0, 212, 170, 0.4);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 300px;
+}
+
+.details-card {
+  width: 100%;
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.detail-value.highlight {
+  color: #00d4aa;
+  font-family: monospace;
+}
+
+.info-box {
+  width: 100%;
+  background: rgba(29, 158, 117, 0.1);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.info-text {
+  font-size: 14px;
+  color: #00d4aa;
+  line-height: 1.5;
+}
+
+.btn {
+  width: 100%;
+  padding: 18px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  margin-bottom: 12px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1D9E75, #00d4aa);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 212, 170, 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.btn-secondary:active {
+  background: #333;
+}
+
+.footer {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+}
+
+@media screen and (max-width: 375px) {
+  .mobile-container { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="mobile-container">
+  <div class="content">
+    <div class="success-icon">✓</div>
+    
+    <h1 class="title">Registration Successful!</h1>
+    <p class="subtitle">You're all set for Timeless Sunday. A confirmation email has been sent to your inbox.</p>
+    
+    <div class="details-card" id="detailsCard">
+      <div class="detail-row">
+        <span class="detail-label">Name</span>
+        <span class="detail-value" id="guestName">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Email</span>
+        <span class="detail-value" id="guestEmail">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value" id="guestPhone">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Card ID</span>
+        <span class="detail-value highlight" id="cardId">-</span>
+      </div>
+    </div>
+    
+    <div class="info-box">
+      <p class="info-text">
+        <strong>Important:</strong> Bring your NFC card to the event. Tap it at the entrance for check-in.
+      </p>
+    </div>
+    
+    <button class="btn btn-primary" onclick="window.location.href='scan.html'">Scan Another Card</button>
+    <button class="btn btn-secondary" onclick="window.location.href='index.html'">Back to Home</button>
+  </div>
+  
+  <div class="footer">
+    Team Odetayo — Est 2026
+  </div>
+</div>
+
+<script>
+// Get registration details from URL or localStorage
+const urlParams = new URLSearchParams(window.location.search);
+const guestName = urlParams.get('name') || localStorage.getItem('guestName') || '-';
+const guestEmail = urlParams.get('email') || localStorage.getItem('guestEmail') || '-';
+const guestPhone = urlParams.get('phone') || localStorage.getItem('guestPhone') || '-';
+const cardId = urlParams.get('card_id') || localStorage.getItem('cardId') || '-';
+
+// Mask card ID for display
+const maskedCardId = cardId.length > 12 
+  ? `${cardId.slice(0, 8)}...${cardId.slice(-4)}`
+  : cardId;
+
+document.getElementById('guestName').textContent = guestName;
+document.getElementById('guestEmail').textContent = guestEmail;
+document.getElementById('guestPhone').textContent = guestPhone;
+document.getElementById('cardId').textContent = maskedCardId;
+
+// Clear localStorage
+localStorage.removeItem('guestName');
+localStorage.removeItem('guestEmail');
+localStorage.removeItem('guestPhone');
+localStorage.removeItem('cardId');
+</script>
+</body>
+</html>

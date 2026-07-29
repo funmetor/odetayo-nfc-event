@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register V2 — Team Odetayo</title>
+<style>
+:root {
+  --mint: #1D9E75;
+  --tan: #8A6F45;
+  --cream: #F7F3EA;
+  --ink: #2A2620;
+  --muted: #7A7568;
+  --border: #E4DFD1;
+  --danger: #C0392B;
+  --gradient: linear-gradient(90deg, var(--mint) 0%, var(--tan) 100%);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #121212;
+  color: #ffffff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #1a1a1a;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 12px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.event-banner {
+  width: 100%;
+  height: 280px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.event-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%231D9E75" stop-opacity="0.3"/><stop offset="100%" stop-color="%2316213e" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="40" fill="url(%23a)"/></svg>');
+  background-size: cover;
+}
+
+.event-banner-content {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 1;
+}
+
+.event-title {
+  font-size: 36px;
+  font-weight: 700;
+  font-style: italic;
+  color: #00d4aa;
+  text-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
+  margin-bottom: 8px;
+  font-family: 'Georgia', serif;
+}
+
+.event-subtitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: 'Georgia', serif;
+}
+
+.event-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.event-date-box {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.form-container {
+  background: #1a1a1a;
+  border-radius: 24px 24px 0 0;
+  margin-top: -24px;
+  position: relative;
+  z-index: 10;
+  padding: 24px;
+  min-height: 60vh;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: #333;
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-description {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 18px;
+  z-index: 1;
+}
+
+.input-field {
+  width: 100%;
+  padding: 16px 14px 16px 48px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-field::placeholder {
+  color: #666;
+}
+
+.input-field:focus {
+  border-color: #00d4aa;
+}
+
+.required-star {
+  color: #e74c3c;
+  margin-left: 4px;
+}
+
+.phone-group {
+  display: flex;
+  gap: 12px;
+}
+
+.country-code {
+  display: flex;
+  align-items: center;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 0 12px;
+  min-width: 100px;
+}
+
+.flag {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+.code-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 15px;
+  width: 60px;
+  outline: none;
+}
+
+.phone-input {
+  flex: 1;
+}
+
+.action-links {
+  display: flex;
+  justify-content: space-between;
+  margin: 24px 0;
+}
+
+.action-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #00d4aa;
+  font-size: 14px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn {
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: #333;
+  color: #fff;
+}
+
+.btn-cancel:hover {
+  background: #444;
+}
+
+.btn-confirm {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.btn-confirm.active {
+  background: linear-gradient(90deg, #1D9E75, #00d4aa);
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-confirm.active:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+}
+
+.guest-section {
+  display: none;
+  margin-top: 16px;
+  padding: 16px;
+  background: #2a2a2a;
+  border-radius: 12px;
+}
+
+.guest-section.show {
+  display: block;
+}
+
+.guest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.guest-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.guest-count {
+  font-size: 12px;
+  color: #888;
+}
+
+.add-guest-btn {
+  background: none;
+  border: 1px dashed #444;
+  color: #888;
+  padding: 12px;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.add-guest-btn:hover {
+  border-color: #00d4aa;
+  color: #00d4aa;
+}
+
+.status-message {
+  display: none;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.status-message.show {
+  display: block;
+}
+
+.status-success {
+  background: rgba(29, 158, 117, 0.2);
+  color: #00d4aa;
+  border: 1px solid rgba(0, 212, 170, 0.3);
+}
+
+.status-error {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+@media (max-width: 380px) {
+  .phone-group {
+    flex-direction: column;
+  }
+  
+  .country-code {
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <button class="back-btn" onclick="history.back()">←</button>
+  <h1 class="header-title">Event details</h1>
+</header>
+
+<div class="event-banner">
+  <div class="event-banner-content">
+    <div class="event-title">Timeless</div>
+    <div class="event-subtitle">Sunday</div>
+    <div class="event-date">
+      <span class="event-date-box">26TH APR</span>
+      <span>Epe &amp; Lekki Phase 1</span>
+      <span>2pm</span>
+    </div>
+  </div>
+</div>
+
+<div class="form-container">
+  <div class="form-header">
+    <h2 class="form-title">Who's attending?</h2>
+    <button class="close-btn" onclick="history.back()">×</button>
+  </div>
+  
+  <p class="form-description">
+    Please enter the detail(s) for your purchase. You may add up guests, however the number of tickets determines number of guest you can add.
+  </p>
+
+  <form id="registrationForm" onsubmit="return false;">
+    <div class="input-group">
+      <span class="input-icon">👤</span>
+      <input type="text" class="input-field" id="fullName" placeholder="Enter full name" required>
+      <span class="required-star">*</span>
+    </div>
+
+    <div class="phone-group">
+      <div class="country-code">
+        <span class="flag">🇳🇬</span>
+        <input type="text" class="code-input" id="countryCode" value="+234" readonly>
+      </div>
+      <div class="input-group phone-input">
+        <input type="tel" class="input-field" id="phone" placeholder="Phone Number" required>
+        <span class="required-star">*</span>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <span class="input-icon">✉️</span>
+      <input type="email" class="input-field" id="email" placeholder="Enter Email Address (Optional)">
+    </div>
+
+    <div class="action-links">
+      <button type="button" class="action-link" onclick="toggleGuestSection()">
+        <span>➕</span>
+        <span>Add Guests</span>
+      </button>
+      <button type="button" class="action-link" onclick="autoFillDetails()">
+        <span>👤</span>
+        <span>Auto-Fill Details</span>
+      </button>
+    </div>
+
+    <div class="guest-section" id="guestSection">
+      <div class="guest-header">
+        <span class="guest-title">Guest Details</span>
+        <span class="guest-count" id="guestCount">0 guests added</span>
+      </div>
+      <div id="guestList"></div>
+      <button type="button" class="add-guest-btn" onclick="addGuest()">+ Add another guest</button>
+    </div>
+
+    <div class="status-message" id="statusMessage"></div>
+
+    <div class="button-group">
+      <button type="button" class="btn btn-cancel" onclick="cancelRegistration()">Cancel</button>
+      <button type="button" class="btn btn-confirm" id="confirmBtn" onclick="submitRegistration()">Confirm</button>
+    </div>
+  </form>
+</div>
+
+<script>
+let guests = [];
+let debounce;
+
+function toggleGuestSection() {
+  const section = document.getElementById('guestSection');
+  section.classList.toggle('show');
+  if (section.classList.contains('show') && guests.length === 0) {
+    addGuest();
+  }
+  updateConfirmButton();
+}
+
+function addGuest() {
+  guests.push({ name: '', email: '' });
+  renderGuests();
+  updateConfirmButton();
+}
+
+function renderGuests() {
+  const list = document.getElementById('guestList');
+  const count = document.getElementById('guestCount');
+  
+  list.innerHTML = guests.map((guest, index) => `
+    <div style="margin-bottom: 12px; padding: 12px; background: #1a1a1a; border-radius: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 13px; color: #888;">Guest ${index + 1}</span>
+        <button type="button" onclick="removeGuest(${index})" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px;">×</button>
+      </div>
+      <input type="text" placeholder="Guest name" value="${guest.name}" 
+        oninput="updateGuest(${index}, 'name', this.value)"
+        style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 13px; margin-bottom: 8px;">
+      <input type="email" placeholder="Guest email (optional)" value="${guest.email}"
+        oninput="updateGuest(${index}, 'email', this.value)"
+        style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 13px;">
+    </div>
+  `).join('');
+  
+  count.textContent = `${guests.length} guest${guests.length !== 1 ? 's' : ''} added`;
+}
+
+function updateGuest(index, field, value) {
+  guests[index][field] = value;
+  updateConfirmButton();
+}
+
+function removeGuest(index) {
+  guests.splice(index, 1);
+  renderGuests();
+  updateConfirmButton();
+}
+
+function autoFillDetails() {
+  const name = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  
+  if (!name && !phone && !email) {
+    showStatus('Please fill in your details first before auto-filling guests.', 'error');
+    return;
+  }
+  
+  guests.forEach((guest, index) => {
+    if (!guest.name) {
+      guest.name = name ? `${name} (Guest ${index + 1})` : '';
+    }
+  });
+  
+  renderGuests();
+  showStatus('Details auto-filled for guests', 'success');
+}
+
+function updateConfirmButton() {
+  const name = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const hasRequiredFields = name && phone;
+  
+  const btn = document.getElementById('confirmBtn');
+  if (hasRequiredFields) {
+    btn.classList.add('active');
+    btn.disabled = false;
+  } else {
+    btn.classList.remove('active');
+    btn.disabled = true;
+  }
+}
+
+function showStatus(message, type) {
+  const status = document.getElementById('statusMessage');
+  status.textContent = message;
+  status.className = `status-message show status-${type}`;
+  
+  setTimeout(() => {
+    status.classList.remove('show');
+  }, 3000);
+}
+
+function cancelRegistration() {
+  if (confirm('Are you sure you want to cancel?')) {
+    history.back();
+  }
+}
+
+async function submitRegistration() {
+  const name = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const countryCode = document.getElementById('countryCode').value;
+  
+  if (!name || !phone) {
+    showStatus('Please fill in all required fields', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('confirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'Confirming...';
+  
+  try {
+    const fullPhone = countryCode + phone;
+    
+    const guestData = {
+      name,
+      email: email || null,
+      phone: fullPhone,
+      guests: guests.filter(g => g.name)
+    };
+    
+    const res = await fetch('/api/register-v2', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(guestData)
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) throw new Error(data.error || 'Registration failed');
+    
+    showStatus('Registration successful! You will receive a confirmation shortly.', 'success');
+    
+    setTimeout(() => {
+      window.location.href = 'success.html';
+    }, 2000);
+    
+  } catch (err) {
+    showStatus(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirm';
+    updateConfirmButton();
+  }
+}
+
+document.getElementById('fullName').addEventListener('input', updateConfirmButton);
+document.getElementById('phone').addEventListener('input', updateConfirmButton);
+document.getElementById('email').addEventListener('input', updateConfirmButton);
+
+updateConfirmButton();
+</script>
+</body>
+</html>

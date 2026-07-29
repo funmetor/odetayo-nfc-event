@@ -57,6 +57,60 @@ app.post('/api/register', async (req, res) => {
   res.json({ success: true, guest, email: emailResult });
 });
 
+// ---- V2 Registration (No NFC card required) ----
+app.post('/api/register-v2', async (req, res) => {
+  const { name, email, phone, guests: additionalGuests } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  // Generate a unique ID for this registration
+  const tag_uid = 'V2-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+  const guest = {
+    tag_uid,
+    name,
+    email: email || null,
+    phone: phone || null,
+    plus_one: additionalGuests && additionalGuests.length > 0,
+    plus_one_name: additionalGuests && additionalGuests.length > 0 ? additionalGuests.map(g => g.name).join(', ') : null,
+    registered_at: new Date().toISOString(),
+    checked_in: false,
+    checked_in_at: null
+  };
+
+  db.get('guests').push(guest).write();
+
+  // Register additional guests if provided
+  if (additionalGuests && additionalGuests.length > 0) {
+    for (const additionalGuest of additionalGuests) {
+      if (additionalGuest.name) {
+        const additionalGuestUid = 'V2-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        const additionalGuestData = {
+          tag_uid: additionalGuestUid,
+          name: additionalGuest.name,
+          email: additionalGuest.email || null,
+          phone: null,
+          plus_one: false,
+          plus_one_name: null,
+          registered_at: new Date().toISOString(),
+          checked_in: false,
+          checked_in_at: null
+        };
+        db.get('guests').push(additionalGuestData).write();
+      }
+    }
+  }
+
+  let emailResult = { sent: false };
+  if (email) {
+    emailResult = await sendWelcomeEmail(guest);
+  }
+
+  res.json({ success: true, guest, email: emailResult });
+});
+
 // ---- Check-in ----
 app.post('/api/checkin', (req, res) => {
   const { tag_uid } = req.body;

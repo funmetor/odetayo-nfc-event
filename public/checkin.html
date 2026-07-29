@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check-in — Team Odetayo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="register.html">Register</a>
+  <a href="checkin.html" class="active">Check-in</a>
+  <a href="admin.html">Admin</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h1>Entrance check-in</h1>
+    <p>Tap a card to verify access</p>
+  </div>
+  <div class="card-body">
+
+    <div class="nfc-scan" id="scanBox">Tap "Scan card" and hold the guest's card to your phone</div>
+    <button class="btn-secondary" id="scanBtn">Scan card</button>
+
+    <label>Card ID (or type manually for testing)</label>
+    <input type="text" id="tag_uid" placeholder="e.g. 04:A2:1F:9C">
+    <button class="btn-primary" onclick="checkIn()">Check in</button>
+
+    <div class="result-card" id="resultCard">
+      <p class="result-name" id="resultName"></p>
+      <p class="result-status" id="resultStatus"></p>
+      <button class="btn-primary" id="registerNowBtn" style="display:none;" onclick="location.href='register.html'">Register this card now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function scanNfc() {
+  const box = document.getElementById('scanBox');
+  if (!('NDEFReader' in window)) {
+    box.textContent = 'Web NFC not supported on this browser (use Chrome on Android). Type the card ID manually below.';
+    return;
+  }
+  try {
+    const reader = new NDEFReader();
+    await reader.scan();
+    box.textContent = 'Ready — hold the card near your phone...';
+    reader.onreading = (event) => {
+      document.getElementById('tag_uid').value = event.serialNumber;
+      box.textContent = 'Card detected: ' + event.serialNumber;
+      checkIn();
+    };
+  } catch (err) {
+    box.textContent = 'Could not start NFC scan: ' + err.message;
+  }
+}
+document.getElementById('scanBtn').addEventListener('click', scanNfc);
+
+async function checkIn() {
+  const tag_uid = document.getElementById('tag_uid').value.trim();
+  if (!tag_uid) return;
+
+  const res = await fetch('/api/checkin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tag_uid })
+  });
+  const data = await res.json();
+
+  const card = document.getElementById('resultCard');
+  const name = document.getElementById('resultName');
+  const status = document.getElementById('resultStatus');
+  const registerBtn = document.getElementById('registerNowBtn');
+  card.classList.add('show');
+  registerBtn.style.display = 'none';
+
+  if (data.status === 'granted') {
+    card.className = 'result-card show result-granted';
+    name.textContent = data.guest.name + (data.guest.plus_one ? ' + ' + (data.guest.plus_one_name || '1') : '');
+    status.textContent = 'Access granted';
+    status.className = 'result-status granted';
+  } else if (data.status === 'already_used') {
+    card.className = 'result-card show result-denied';
+    name.textContent = data.guest.name;
+    status.textContent = 'Already checked in at ' + new Date(data.guest.checked_in_at).toLocaleTimeString();
+    status.className = 'result-status denied';
+  } else {
+    card.className = 'result-card show result-denied';
+    name.textContent = 'Unknown card';
+    status.textContent = 'Not registered';
+    status.className = 'result-status denied';
+    registerBtn.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

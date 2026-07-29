@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — Team Odetayo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="register.html" class="active">Register</a>
+  <a href="checkin.html">Check-in</a>
+  <a href="admin.html">Admin</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h1>Team Odetayo · Register</h1>
+    <p>Est 2026</p>
+  </div>
+  <div class="card-body">
+
+    <div class="nfc-scan" id="scanBox">Tap "Scan card" and hold the NFC card to your phone</div>
+    <button class="btn-secondary" id="scanBtn">Scan card</button>
+
+    <label>Card ID</label>
+    <input type="text" id="tag_uid" placeholder="e.g. 04:A2:1F:9C">
+
+    <label>Full name</label>
+    <input type="text" id="name" placeholder="Amaka Obi" oninput="searchInvite(this.value)">
+    <div id="inviteNote" class="status-box status-muted"></div>
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="amaka@email.com">
+
+    <label>Phone number</label>
+    <input type="tel" id="phone" placeholder="0803 123 4567">
+
+    <div class="toggle-row">
+      <span id="plusOneLabel">Bringing a plus-one?</span>
+      <button class="switch" id="plusOneToggle" onclick="togglePlusOne()" disabled></button>
+    </div>
+    <div id="plusOneNameWrap" style="display:none;">
+      <label>Plus-one name</label>
+      <input type="text" id="plus_one_name" placeholder="Tunde Obi">
+    </div>
+
+    <button class="btn-primary" id="submitBtn" onclick="submitRegistration()">Register card</button>
+    <div class="status-box" id="resultBox"></div>
+  </div>
+</div>
+
+<script>
+let plusOneEligible = false;
+let plusOneOn = false;
+
+async function scanNfc() {
+  const box = document.getElementById('scanBox');
+  if (!('NDEFReader' in window)) {
+    box.textContent = 'Web NFC not supported on this browser (use Chrome on Android). Type the card ID manually below.';
+    return;
+  }
+  try {
+    const reader = new NDEFReader();
+    await reader.scan();
+    box.textContent = 'Ready — hold the card near your phone...';
+    reader.onreading = (event) => {
+      document.getElementById('tag_uid').value = event.serialNumber;
+      box.textContent = 'Card detected: ' + event.serialNumber;
+    };
+  } catch (err) {
+    box.textContent = 'Could not start NFC scan: ' + err.message;
+  }
+}
+
+document.getElementById('scanBtn').addEventListener('click', scanNfc);
+
+let debounce;
+function searchInvite(q) {
+  clearTimeout(debounce);
+  const note = document.getElementById('inviteNote');
+  const toggle = document.getElementById('plusOneToggle');
+  if (!q || q.length < 2) {
+    note.classList.remove('show');
+    toggle.disabled = true;
+    return;
+  }
+  debounce = setTimeout(async () => {
+    const res = await fetch('/api/invites/search?q=' + encodeURIComponent(q));
+    const matches = await res.json();
+    if (matches.length > 0) {
+      const m = matches[0];
+      plusOneEligible = m.plus_one_eligible;
+      note.textContent = plusOneEligible
+        ? 'Matched invite list · plus-one allowed'
+        : 'Matched invite list · no plus-one on this invite';
+      note.className = 'status-box show ' + (plusOneEligible ? 'status-success' : 'status-muted');
+      toggle.disabled = !plusOneEligible;
+      if (!plusOneEligible) { plusOneOn = false; toggle.classList.remove('on'); document.getElementById('plusOneNameWrap').style.display = 'none'; }
+    } else {
+      note.textContent = 'Not found on invite list — plus-one unavailable';
+      note.className = 'status-box show status-muted';
+      plusOneEligible = false;
+      toggle.disabled = true;
+    }
+  }, 300);
+}
+
+function togglePlusOne() {
+  const toggle = document.getElementById('plusOneToggle');
+  if (toggle.disabled) return;
+  plusOneOn = !plusOneOn;
+  toggle.classList.toggle('on', plusOneOn);
+  document.getElementById('plusOneNameWrap').style.display = plusOneOn ? 'block' : 'none';
+}
+
+async function submitRegistration() {
+  const tag_uid = document.getElementById('tag_uid').value.trim();
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const plus_one_name = document.getElementById('plus_one_name').value.trim();
+  const resultBox = document.getElementById('resultBox');
+
+  if (!tag_uid || !name) {
+    resultBox.textContent = 'Card ID and name are required.';
+    resultBox.className = 'status-box show status-error';
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Registering...';
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag_uid, name, email, phone, plus_one: plusOneOn, plus_one_name })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+    resultBox.textContent = 'Registered! ' + (data.email && data.email.sent ? 'Welcome email sent.' : 'Welcome email not sent (SMTP not configured).');
+    resultBox.className = 'status-box show status-success';
+  } catch (err) {
+    resultBox.textContent = err.message;
+    resultBox.className = 'status-box show status-error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Register card';
+  }
+}
+</script>
+</body>
+</html>

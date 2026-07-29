@@ -8,6 +8,10 @@ const crypto = require('crypto');
 const { z } = require('zod');
 const { parse } = require('csv-parse/sync');
 const { sql } = require('./db');
+
+if (!sql) {
+  console.error('[server] FATAL: DATABASE_URL not configured. Database operations will fail.');
+}
 const { sendWelcomeEmail } = require('./mailer');
 
 const app = express();

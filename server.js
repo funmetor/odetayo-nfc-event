@@ -20,6 +20,70 @@ const imageStorage = {
   checkin: null
 };
 
+// ---- Database Setup ----
+async function setupDatabase() {
+  try {
+    // Create invites table
+    await sql`
+      CREATE TABLE IF NOT EXISTS invites (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        plus_one_eligible BOOLEAN DEFAULT false
+      )
+    `;
+    
+    // Create guests table
+    await sql`
+      CREATE TABLE IF NOT EXISTS guests (
+        id SERIAL PRIMARY KEY,
+        tag_uid TEXT,
+        card_id INTEGER,
+        name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        plus_one BOOLEAN DEFAULT false,
+        plus_one_name TEXT,
+        status VARCHAR(20) DEFAULT 'pending',
+        registered_at TIMESTAMP DEFAULT NOW(),
+        checked_in BOOLEAN DEFAULT false,
+        checked_in_at TIMESTAMP
+      )
+    `;
+    
+    // Create cards table
+    await sql`
+      CREATE TABLE IF NOT EXISTS cards (
+        id SERIAL PRIMARY KEY,
+        uid_hash VARCHAR(64) UNIQUE NOT NULL,
+        status VARCHAR(20) DEFAULT 'unused',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+    
+    // Create audit_logs table
+    await sql`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        event_type VARCHAR(50) NOT NULL,
+        card_uid_hash VARCHAR(64),
+        guest_id INTEGER,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        details JSONB,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+    
+    console.log('[db] All tables ready');
+  } catch (err) {
+    console.error('[db] Setup error:', err.message);
+  }
+}
+
+setupDatabase();
+
 // ---- Security Middleware ----
 app.use(helmet({
   contentSecurityPolicy: {

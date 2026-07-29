@@ -9,7 +9,7 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // ---- Invite list lookup (for plus-one eligibility) ----
 app.get('/api/invites/search', (req, res) => {

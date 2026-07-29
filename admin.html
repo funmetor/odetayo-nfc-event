@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Team Odetayo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="register.html">Register</a>
+  <a href="checkin.html">Check-in</a>
+  <a href="admin.html" class="active">Admin</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h1>Admin</h1>
+    <p>Invite list &amp; live stats</p>
+  </div>
+  <div class="card-body">
+
+    <div class="stats-row">
+      <div class="stat"><div class="num" id="statInvited">0</div><div class="label">Invited</div></div>
+      <div class="stat"><div class="num" id="statRegistered">0</div><div class="label">Registered</div></div>
+      <div class="stat"><div class="num" id="statCheckedIn">0</div><div class="label">Checked in</div></div>
+    </div>
+
+    <label>Upload invite list (CSV: name, email, phone, plus_one)</label>
+    <input type="file" id="csvFile" accept=".csv">
+    <button class="btn-primary" onclick="uploadCsv()">Confirm and load list</button>
+    <div class="status-box" id="uploadStatus"></div>
+
+    <label style="margin-top:24px;">Registered guests</label>
+    <table id="guestTable">
+      <thead><tr><th>Name</th><th>Card ID</th><th>Plus-one</th><th>Checked in</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function loadStats() {
+  const res = await fetch('/api/admin/stats');
+  const s = await res.json();
+  document.getElementById('statInvited').textContent = s.invited;
+  document.getElementById('statRegistered').textContent = s.registered;
+  document.getElementById('statCheckedIn').textContent = s.checked_in;
+}
+
+async function loadGuests() {
+  const res = await fetch('/api/admin/guests');
+  const guests = await res.json();
+  const tbody = document.querySelector('#guestTable tbody');
+  tbody.innerHTML = guests.map(g => `
+    <tr>
+      <td>${g.name}</td>
+      <td>${g.tag_uid}</td>
+      <td>${g.plus_one ? (g.plus_one_name || 'Yes') : '—'}</td>
+      <td>${g.checked_in ? '✓' : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+async function uploadCsv() {
+  const fileInput = document.getElementById('csvFile');
+  const status = document.getElementById('uploadStatus');
+  if (!fileInput.files.length) {
+    status.textContent = 'Choose a CSV file first.';
+    status.className = 'status-box show status-error';
+    return;
+  }
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  try {
+    const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    status.textContent = `Loaded ${data.count} invites.`;
+    status.className = 'status-box show status-success';
+    loadStats();
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'status-box show status-error';
+  }
+}
+
+loadStats();
+loadGuests();
+setInterval(() => { loadStats(); loadGuests(); }, 4000);
+</script>
+</body>
+</html>

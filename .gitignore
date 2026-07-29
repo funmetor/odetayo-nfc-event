@@ -2,3 +2,5 @@ node_modules/
 data/db.json
 .env
 .vercel
+.DS_Store
+public/

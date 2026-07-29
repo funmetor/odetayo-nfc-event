@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#121212">
+<title>Check-in V2 — Team Odetayo</title>
+<style>
+:root {
+  --mint: #1D9E75;
+  --tan: #8A6F45;
+  --cream: #F7F3EA;
+  --ink: #2A2620;
+  --muted: #7A7568;
+  --border: #E4DFD1;
+  --danger: #C0392B;
+  --gradient: linear-gradient(90deg, var(--mint) 0%, var(--tan) 100%);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  height: -webkit-fill-available;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  background: #0a0a0a;
+  color: #ffffff;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.mobile-container {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background: #121212;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: calc(var(--safe-top) + 12px) 16px 12px;
+  background: #1a1a1a;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 12px;
+  line-height: 1;
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.event-banner {
+  width: 100%;
+  height: 320px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.event-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%231D9E75" stop-opacity="0.3"/><stop offset="100%" stop-color="%2316213e" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="40" fill="url(%23a)"/></svg>');
+  background-size: cover;
+}
+
+.event-banner-content {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  right: 20px;
+  z-index: 1;
+}
+
+.event-title {
+  font-size: 42px;
+  font-weight: 700;
+  font-style: italic;
+  color: #00d4aa;
+  text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);
+  margin-bottom: 4px;
+  font-family: 'Georgia', serif;
+  letter-spacing: -0.5px;
+}
+
+.event-subtitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: 'Georgia', serif;
+}
+
+.event-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 11px;
+  color: #aaa;
+  letter-spacing: 0.3px;
+}
+
+.event-date-box {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.form-container {
+  background: #1a1a1a;
+  border-radius: 28px 28px 0 0;
+  margin-top: -28px;
+  position: relative;
+  z-index: 10;
+  padding: 28px 20px calc(var(--safe-bottom) + 28px);
+  min-height: 65vh;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.close-btn {
+  background: #2a2a2a;
+  border: none;
+  color: #888;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+.form-description {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.nfc-scan {
+  border: 2px dashed #333;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  background: #1a1a1a;
+}
+
+.nfc-scan.ready {
+  border-color: #00d4aa;
+  color: #00d4aa;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #555;
+  font-size: 16px;
+  z-index: 1;
+}
+
+.input-field {
+  width: 100%;
+  padding: 16px 16px 16px 48px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input-field::placeholder {
+  color: #555;
+}
+
+.input-field:focus {
+  border-color: #00d4aa;
+  background: #2f2f2f;
+}
+
+.btn {
+  width: 100%;
+  padding: 18px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  letter-spacing: -0.2px;
+  margin-top: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1D9E75, #00d4aa);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 212, 170, 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 212, 170, 0.2);
+}
+
+.btn-primary:disabled {
+  background: #2a2a2a;
+  color: #555;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.btn-secondary:active {
+  background: #333;
+  transform: scale(0.98);
+}
+
+.result-card {
+  display: none;
+  padding: 24px;
+  border-radius: 16px;
+  margin-top: 24px;
+  text-align: center;
+}
+
+.result-card.show {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-granted {
+  background: rgba(29, 158, 117, 0.15);
+  border: 1px solid rgba(0, 212, 170, 0.3);
+}
+
+.result-denied {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.result-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.result-name {
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.result-status {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.result-status.granted {
+  color: #00d4aa;
+}
+
+.result-status.denied {
+  color: #e74c3c;
+}
+
+.btn-register {
+  background: linear-gradient(135deg, #1D9E75, #00d4aa);
+  color: #fff;
+  margin-top: 16px;
+  box-shadow: 0 4px 16px rgba(0, 212, 170, 0.25);
+}
+
+.btn-register:active {
+  transform: scale(0.98);
+}
+
+.status-message {
+  display: none;
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.status-message.show {
+  display: block;
+}
+
+.status-success {
+  background: rgba(29, 158, 117, 0.15);
+  color: #00d4aa;
+  border: 1px solid rgba(0, 212, 170, 0.25);
+}
+
+.status-error {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.25);
+}
+
+.action-links {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.action-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  text-decoration: none;
+}
+
+.action-link:active {
+  opacity: 0.7;
+}
+
+@media screen and (max-width: 375px) {
+  .mobile-container {
+    box-shadow: none;
+  }
+  
+  .event-title {
+    font-size: 36px;
+  }
+  
+  .event-subtitle {
+    font-size: 24px;
+  }
+  
+  .form-container {
+    padding: 24px 16px calc(var(--safe-bottom) + 24px);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="mobile-container">
+  <header class="header">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <h1 class="header-title">Event details</h1>
+  </header>
+
+  <div class="event-banner">
+    <div class="event-banner-content">
+      <div class="event-title">Timeless</div>
+      <div class="event-subtitle">Sunday</div>
+      <div class="event-date">
+        <span class="event-date-box">26TH APR</span>
+        <span>Epe &amp; Lekki Phase 1</span>
+        <span>2pm</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <div class="form-header">
+      <h2 class="form-title">Entrance check-in</h2>
+      <button class="close-btn" onclick="history.back()">×</button>
+    </div>
+    
+    <p class="form-description">
+      Scan the guest's card or enter their Card ID manually to verify access.
+    </p>
+
+    <div class="nfc-scan" id="scanBox">Tap "Scan card" and hold the guest's card to your phone</div>
+    <button class="btn btn-secondary" id="scanBtn">Scan card</button>
+
+    <div class="input-group">
+      <span class="input-icon">🪪</span>
+      <input type="text" class="input-field" id="tag_uid" placeholder="Enter Card ID (e.g. 04:A2:1F:9C)">
+    </div>
+
+    <button class="btn btn-primary" id="checkinBtn" onclick="checkIn()">Check in</button>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-icon" id="resultIcon"></div>
+      <p class="result-name" id="resultName"></p>
+      <p class="result-status" id="resultStatus"></p>
+    </div>
+
+    <div class="status-message" id="statusMessage"></div>
+
+    <div class="action-links">
+      <a href="register-v2.html" class="action-link">
+        <span>📝</span>
+        <span>Register new guest</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+async function scanNfc() {
+  const box = document.getElementById('scanBox');
+  if (!('NDEFReader' in window)) {
+    box.textContent = 'Web NFC not supported on this browser (use Chrome on Android). Type the card ID manually below.';
+    return;
+  }
+  try {
+    const reader = new NDEFReader();
+    await reader.scan();
+    box.textContent = 'Ready — hold the card near your phone...';
+    box.classList.add('ready');
+    reader.onreading = (event) => {
+      document.getElementById('tag_uid').value = event.serialNumber;
+      box.textContent = 'Card detected: ' + event.serialNumber;
+      checkIn();
+    };
+  } catch (err) {
+    box.textContent = 'Could not start NFC scan: ' + err.message;
+  }
+}
+
+document.getElementById('scanBtn').addEventListener('click', scanNfc);
+
+function showStatus(message, type) {
+  const status = document.getElementById('statusMessage');
+  status.textContent = message;
+  status.className = `status-message show status-${type}`;
+  
+  setTimeout(() => {
+    status.classList.remove('show');
+  }, 3000);
+}
+
+async function checkIn() {
+  const tag_uid = document.getElementById('tag_uid').value.trim();
+  if (!tag_uid) {
+    showStatus('Please enter a Card ID or scan a card', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('checkinBtn');
+  btn.disabled = true;
+  btn.textContent = 'Checking in...';
+
+  try {
+    const res = await fetch('/api/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag_uid })
+    });
+    const data = await res.json();
+
+    const card = document.getElementById('resultCard');
+    const icon = document.getElementById('resultIcon');
+    const name = document.getElementById('resultName');
+    const status = document.getElementById('resultStatus');
+    
+    card.classList.add('show');
+
+    if (data.status === 'granted') {
+      card.className = 'result-card show result-granted';
+      icon.textContent = '✓';
+      name.textContent = data.guest.name + (data.guest.plus_one ? ' + ' + (data.guest.plus_one_name || '1') : '');
+      status.textContent = 'Access granted';
+      status.className = 'result-status granted';
+      showStatus('Check-in successful!', 'success');
+    } else if (data.status === 'already_used') {
+      card.className = 'result-card show result-denied';
+      icon.textContent = '⚠';
+      name.textContent = data.guest.name;
+      status.textContent = 'Already checked in at ' + new Date(data.guest.checked_in_at).toLocaleTimeString();
+      status.className = 'result-status denied';
+      showStatus('This card has already been used', 'error');
+    } else {
+      card.className = 'result-card show result-denied';
+      icon.textContent = '✕';
+      name.textContent = 'Unknown card';
+      status.textContent = 'Not registered';
+      status.className = 'result-status denied';
+      showStatus('Card not found in system', 'error');
+    }
+  } catch (err) {
+    showStatus(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Check in';
+  }
+}
+</script>
+</body>
+</html>

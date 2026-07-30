@@ -269,7 +269,7 @@ localStorage.removeItem('token');
 // Load banner image from admin uploads as background layer
 (async function loadBackground() {
   try {
-    const res = await fetch('/api/images/register');
+    const res = await fetch('/api/images/scan');
     const data = await res.json();
     if (data.url) {
       document.getElementById('bgLayer').style.backgroundImage = `url(${data.url})`;

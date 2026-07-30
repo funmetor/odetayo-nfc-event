@@ -603,7 +603,7 @@ async function checkIn() {
 // Load banner image from admin uploads
 (async function loadBanner() {
   try {
-    const res = await fetch('/api/images/checkin');
+    const res = await fetch('/api/images/scan');
     const data = await res.json();
     if (data.url) {
       const banner = document.querySelector('.event-banner');

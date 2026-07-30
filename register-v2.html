@@ -49,6 +49,21 @@ body {
   background: #121212;
   position: relative;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.10;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
 }
 
 .header {
@@ -61,6 +76,7 @@ body {
   z-index: 100;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .back-btn {
@@ -212,15 +228,19 @@ body {
 .input-field {
   width: 100%;
   padding: 16px 16px 16px 48px;
-  background: #2a2a2a;
-  border: 1px solid #333;
+  background: linear-gradient(145deg, #2e2e2e, #252525);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   color: #fff;
   font-size: 16px;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   -webkit-appearance: none;
   appearance: none;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 6px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .input-field::placeholder {
@@ -228,8 +248,14 @@ body {
 }
 
 .input-field:focus {
-  border-color: #00d4aa;
-  background: #2f2f2f;
+  border-color: rgba(0, 212, 170, 0.5);
+  background: linear-gradient(145deg, #323232, #2a2a2a);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(0, 212, 170, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
 }
 
 .required-star {
@@ -250,12 +276,16 @@ body {
 .country-code {
   display: flex;
   align-items: center;
-  background: #2a2a2a;
-  border: 1px solid #333;
+  background: linear-gradient(145deg, #2e2e2e, #252525);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   padding: 0 14px;
   height: 54px;
   flex-shrink: 0;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 6px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .flag {
@@ -444,6 +474,7 @@ body {
 <body>
 
 <div class="mobile-container">
+  <div class="bg-layer" id="bgLayer"></div>
   <header class="header">
     <button class="back-btn" onclick="history.back()">←</button>
     <h1 class="header-title">Event details</h1>
@@ -715,6 +746,8 @@ updateConfirmButton();
       banner.style.backgroundImage = `url(${data.url})`;
       banner.style.backgroundSize = 'cover';
       banner.style.backgroundPosition = 'center';
+      // Also set as full-page background layer
+      document.getElementById('bgLayer').style.backgroundImage = `url(${data.url})`;
     }
   } catch {}
 })();

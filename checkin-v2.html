@@ -49,6 +49,21 @@ body {
   background: #121212;
   position: relative;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.10;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
 }
 
 .header {
@@ -195,7 +210,7 @@ body {
 }
 
 .nfc-scan {
-  border: 2px dashed #333;
+  border: 2px dashed rgba(255,255,255,0.1);
   border-radius: 16px;
   padding: 32px 24px;
   text-align: center;
@@ -203,7 +218,11 @@ body {
   font-size: 14px;
   line-height: 1.5;
   margin-bottom: 20px;
-  background: #1a1a1a;
+  background: linear-gradient(145deg, #1e1e1e, #181818);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 6px 12px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .nfc-scan.ready {
@@ -229,15 +248,19 @@ body {
 .input-field {
   width: 100%;
   padding: 16px 16px 16px 48px;
-  background: #2a2a2a;
-  border: 1px solid #333;
+  background: linear-gradient(145deg, #2e2e2e, #252525);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   color: #fff;
   font-size: 16px;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   -webkit-appearance: none;
   appearance: none;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 6px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .input-field::placeholder {
@@ -245,8 +268,14 @@ body {
 }
 
 .input-field:focus {
-  border-color: #00d4aa;
-  background: #2f2f2f;
+  border-color: rgba(0, 212, 170, 0.5);
+  background: linear-gradient(145deg, #323232, #2a2a2a);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(0, 212, 170, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
 }
 
 .btn {
@@ -426,6 +455,7 @@ body {
 <body>
 
 <div class="mobile-container">
+  <div class="bg-layer" id="bgLayer"></div>
   <header class="header">
     <button class="back-btn" onclick="history.back()">←</button>
     <h1 class="header-title">Event details</h1>
@@ -580,6 +610,8 @@ async function checkIn() {
       banner.style.backgroundImage = `url(${data.url})`;
       banner.style.backgroundSize = 'cover';
       banner.style.backgroundPosition = 'center';
+      // Also set as full-page background layer
+      document.getElementById('bgLayer').style.backgroundImage = `url(${data.url})`;
     }
   } catch {}
 })();

@@ -39,6 +39,21 @@ body {
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.10;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
 }
 
 .header {
@@ -71,6 +86,8 @@ body {
   display: flex;
   flex-direction: column;
   padding: 24px 20px calc(var(--safe-bottom) + 24px);
+  position: relative;
+  z-index: 1;
 }
 
 .title {
@@ -223,6 +240,7 @@ body {
 <body>
 
 <div class="mobile-container">
+  <div class="bg-layer" id="bgLayer"></div>
   <header class="header">
     <button class="back-btn" onclick="history.back()">←</button>
     <h1 class="header-title">Timeless Sunday</h1>
@@ -246,7 +264,7 @@ body {
 
     <div id="manualInput" style="display: none; margin-top: 16px;">
       <input type="text" id="manualCardId" placeholder="Enter Card ID (e.g., 04:A2:1F:9C)" 
-        style="width: 100%; padding: 16px; background: #2a2a2a; border: 1px solid #333; border-radius: 14px; color: #fff; font-size: 16px;">
+        style="width: 100%; padding: 16px; background: linear-gradient(145deg, #2e2e2e, #252525); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; color: #fff; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 6px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05); outline: none; transition: all 0.3s ease;">
       <button class="btn btn-primary" onclick="submitManualCard()" style="margin-top: 12px;">Submit</button>
     </div>
   </div>
@@ -392,6 +410,17 @@ function resetUI() {
   subtext.textContent = 'Tap the button below and hold your card near your phone';
   document.getElementById('statusBox').className = 'status-box';
 }
+
+// Load banner image from admin uploads as background layer
+(async function loadBackground() {
+  try {
+    const res = await fetch('/api/images/scan');
+    const data = await res.json();
+    if (data.url) {
+      document.getElementById('bgLayer').style.backgroundImage = `url(${data.url})`;
+    }
+  } catch {}
+})();
 </script>
 </body>
 </html>

@@ -39,6 +39,21 @@ body {
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.10;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
 }
 
 .content {
@@ -49,6 +64,8 @@ body {
   justify-content: center;
   padding: 24px 20px calc(var(--safe-bottom) + 24px);
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .success-icon {
@@ -87,11 +104,16 @@ body {
 
 .details-card {
   width: 100%;
-  background: #1a1a1a;
+  background: linear-gradient(145deg, #1e1e1e, #181818);
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 24px;
   text-align: left;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .detail-row {
@@ -184,6 +206,7 @@ body {
 <body>
 
 <div class="mobile-container">
+  <div class="bg-layer" id="bgLayer"></div>
   <div class="content">
     <div class="success-icon">✓</div>
     
@@ -242,6 +265,17 @@ localStorage.removeItem('guestName');
 localStorage.removeItem('guestEmail');
 localStorage.removeItem('guestPhone');
 localStorage.removeItem('token');
+
+// Load banner image from admin uploads as background layer
+(async function loadBackground() {
+  try {
+    const res = await fetch('/api/images/register');
+    const data = await res.json();
+    if (data.url) {
+      document.getElementById('bgLayer').style.backgroundImage = `url(${data.url})`;
+    }
+  } catch {}
+})();
 </script>
 </body>
 </html>

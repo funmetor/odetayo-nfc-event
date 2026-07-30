@@ -28,32 +28,40 @@ body {
   -webkit-tap-highlight-color: transparent;
   display: flex;
   justify-content: center;
-}
-
-.mobile-container {
-  width: 100%;
-  max-width: 420px;
-  min-height: 100vh;
-  background: #121212;
   position: relative;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
-.bg-layer {
-  position: absolute;
+body::before {
+  content: '';
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-size: cover;
   background-position: center;
-  opacity: 0.10;
+  background-repeat: no-repeat;
   z-index: 0;
   pointer-events: none;
-  transition: opacity 0.5s ease;
+}
+
+.mobile-container {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background: rgba(18, 18, 18, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.bg-layer {
+  display: none;
 }
 
 .content {
@@ -266,13 +274,20 @@ localStorage.removeItem('guestEmail');
 localStorage.removeItem('guestPhone');
 localStorage.removeItem('token');
 
-// Load banner image from admin uploads as background layer
+// Load banner image from admin uploads as full-page background
 (async function loadBackground() {
   try {
-    const res = await fetch('/api/images/scan');
-    const data = await res.json();
-    if (data.url) {
-      document.getElementById('bgLayer').style.backgroundImage = `url(${data.url})`;
+    const types = ['scan', 'register', 'checkin'];
+    let imageUrl = null;
+    for (const t of types) {
+      const res = await fetch('/api/images/' + t);
+      const data = await res.json();
+      if (data.url) { imageUrl = data.url; break; }
+    }
+    if (imageUrl) {
+      const style = document.createElement('style');
+      style.textContent = `body::before { background-image: url(${imageUrl}); }`;
+      document.head.appendChild(style);
     }
   } catch {}
 })();

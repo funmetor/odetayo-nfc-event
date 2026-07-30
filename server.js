@@ -304,7 +304,7 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
     
   } catch (err) {
     console.error('Registration error:', err);
-    res.status(500).json({ error: 'Registration failed. Please try again.', debug: err.message });
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
 });
 

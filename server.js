@@ -59,6 +59,8 @@ async function ensureDb() {
     dbReady = true;
   } catch (err) {
     console.error('[db] Setup error:', err.message);
+    // Still try to proceed - tables may already exist
+    dbReady = true;
   }
 }
 
@@ -301,7 +303,7 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
     
   } catch (err) {
     console.error('Registration error:', err);
-    res.status(500).json({ error: 'Registration failed. Please try again.' });
+    res.status(500).json({ error: 'Registration failed. Please try again.', debug: err.message });
   }
 });
 

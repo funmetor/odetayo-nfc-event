@@ -17,12 +17,26 @@ const { sendWelcomeEmail } = require('./mailer');
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ---- In-memory image storage (replace with database in production) ----
-const imageStorage = {
-  scan: null,
-  register: null,
-  checkin: null
-};
+// ---- Image storage via database ----
+async function getImage(type) {
+  try {
+    const rows = await sql`SELECT image_data FROM site_images WHERE type = ${type}`;
+    return rows.length > 0 ? rows[0].image_data : null;
+  } catch { return null; }
+}
+
+async function setImage(type, imageData) {
+  await sql`INSERT INTO site_images (type, image_data) VALUES (${type}, ${imageData}) ON CONFLICT (type) DO UPDATE SET image_data = ${imageData}`;
+}
+
+async function getAllImages() {
+  const result = { scan: null, register: null, checkin: null };
+  try {
+    const rows = await sql`SELECT type, image_data FROM site_images`;
+    for (const row of rows) result[row.type] = row.image_data;
+  } catch {}
+  return result;
+}
 
 // ---- Database Setup (runs lazily on first request) ----
 let dbReady = false;
@@ -33,6 +47,7 @@ async function ensureDb() {
     await sql`CREATE TABLE IF NOT EXISTS guests (id SERIAL PRIMARY KEY, tag_uid TEXT, card_id INTEGER, name TEXT NOT NULL, email TEXT, phone TEXT, plus_one BOOLEAN DEFAULT false, plus_one_name TEXT, status VARCHAR(20) DEFAULT 'pending', registered_at TIMESTAMP DEFAULT NOW(), checked_in BOOLEAN DEFAULT false, checked_in_at TIMESTAMP)`;
     await sql`CREATE TABLE IF NOT EXISTS cards (id SERIAL PRIMARY KEY, uid_hash VARCHAR(64) UNIQUE NOT NULL, status VARCHAR(20) DEFAULT 'unused', created_at TIMESTAMP DEFAULT NOW())`;
     await sql`CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, event_type VARCHAR(50) NOT NULL, card_uid_hash VARCHAR(64), guest_id INTEGER, ip_address VARCHAR(45), user_agent TEXT, details JSONB, created_at TIMESTAMP DEFAULT NOW())`;
+    await sql`CREATE TABLE IF NOT EXISTS site_images (type VARCHAR(20) PRIMARY KEY, image_data TEXT)`;
     dbReady = true;
   } catch (err) {
     console.error('[db] Setup error:', err.message);
@@ -479,11 +494,14 @@ app.get('/api/admin/guests', async (req, res) => {
 });
 
 // ---- Admin: images ----
-app.get('/api/admin/images', (req, res) => {
-  res.json(imageStorage);
+app.get('/api/admin/images', async (req, res) => {
+  await ensureDb();
+  const images = await getAllImages();
+  res.json(images);
 });
 
-app.post('/api/admin/images', upload.single('image'), (req, res) => {
+app.post('/api/admin/images', upload.single('image'), async (req, res) => {
+  await ensureDb();
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
   
   const type = req.body.type;
@@ -491,24 +509,36 @@ app.post('/api/admin/images', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'Invalid image type' });
   }
   
-  const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-  imageStorage[type] = base64;
+  // Check file size (max 2MB for base64 storage)
+  if (req.file.size > 2 * 1024 * 1024) {
+    return res.status(400).json({ error: 'Image too large. Max 2MB.' });
+  }
   
-  res.json({ success: true, type });
+  try {
+    const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    await setImage(type, base64);
+    res.json({ success: true, type });
+  } catch (err) {
+    console.error('Image upload error:', err);
+    res.status(500).json({ error: 'Failed to save image' });
+  }
 });
 
-// ---- Admin: get images for public pages ----
-app.get('/api/images/:type', (req, res) => {
+// ---- Public: get images for pages ----
+app.get('/api/images/:type', async (req, res) => {
+  await ensureDb();
   const type = req.params.type;
   if (!['scan', 'register', 'checkin'].includes(type)) {
     return res.status(400).json({ error: 'Invalid image type' });
   }
-  res.json({ url: imageStorage[type] });
+  const url = await getImage(type);
+  res.json({ url });
 });
 
-// ---- Admin: get all images ----
-app.get('/api/images', (req, res) => {
-  res.json(imageStorage);
+app.get('/api/images', async (req, res) => {
+  await ensureDb();
+  const images = await getAllImages();
+  res.json(images);
 });
 
 // ---- Admin: audit logs ----

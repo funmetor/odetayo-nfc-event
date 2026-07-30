@@ -104,7 +104,10 @@ const generalLimiter = rateLimit({
 app.use('/api/', generalLimiter);
 
 // ---- Card UID Hashing ----
-const CARD_SALT = process.env.CARD_SALT || crypto.randomBytes(32).toString('hex');
+const CARD_SALT = process.env.CARD_SALT || (() => {
+  const dbUrl = process.env.DATABASE_URL || '';
+  return crypto.createHash('sha256').update(dbUrl + 'nfc-event-salt-v2').digest('hex');
+})();
 
 function hashCardUID(uid) {
   return crypto.createHash('sha256')

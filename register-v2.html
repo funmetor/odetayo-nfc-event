@@ -704,6 +704,20 @@ document.getElementById('phone').addEventListener('input', updateConfirmButton);
 document.getElementById('email').addEventListener('input', updateConfirmButton);
 
 updateConfirmButton();
+
+// Load banner image from admin uploads
+(async function loadBanner() {
+  try {
+    const res = await fetch('/api/images/register');
+    const data = await res.json();
+    if (data.url) {
+      const banner = document.querySelector('.event-banner');
+      banner.style.backgroundImage = `url(${data.url})`;
+      banner.style.backgroundSize = 'cover';
+      banner.style.backgroundPosition = 'center';
+    }
+  } catch {}
+})();
 </script>
 </body>
 </html>

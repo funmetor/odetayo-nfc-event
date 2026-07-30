@@ -617,9 +617,6 @@ async function checkIn() {
       if (data.url) { imageUrl = data.url; break; }
     }
     if (imageUrl) {
-      const style = document.createElement('style');
-      style.textContent = `body::before { background-image: url(${imageUrl}); }`;
-      document.head.appendChild(style);
       const banner = document.querySelector('.event-banner');
       if (banner) {
         banner.style.backgroundImage = `url(${imageUrl})`;

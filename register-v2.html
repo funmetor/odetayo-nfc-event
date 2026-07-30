@@ -753,11 +753,6 @@ updateConfirmButton();
       if (data.url) { imageUrl = data.url; break; }
     }
     if (imageUrl) {
-      document.body.style.setProperty('--bg-image', `url(${imageUrl})`);
-      const style = document.createElement('style');
-      style.textContent = `body::before { background-image: url(${imageUrl}); }`;
-      document.head.appendChild(style);
-      // Also set banner
       const banner = document.querySelector('.event-banner');
       if (banner) {
         banner.style.backgroundImage = `url(${imageUrl})`;

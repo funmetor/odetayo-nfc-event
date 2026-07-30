@@ -416,24 +416,6 @@ function resetUI() {
   subtext.textContent = 'Tap the button below and hold your card near your phone';
   document.getElementById('statusBox').className = 'status-box';
 }
-
-// Load banner image from admin uploads as full-page background
-(async function loadBackground() {
-  try {
-    const types = ['scan', 'register', 'checkin'];
-    let imageUrl = null;
-    for (const t of types) {
-      const res = await fetch('/api/images/' + t);
-      const data = await res.json();
-      if (data.url) { imageUrl = data.url; break; }
-    }
-    if (imageUrl) {
-      const style = document.createElement('style');
-      style.textContent = `body::before { background-image: url(${imageUrl}); }`;
-      document.head.appendChild(style);
-    }
-  } catch {}
-})();
 </script>
 </body>
 </html>

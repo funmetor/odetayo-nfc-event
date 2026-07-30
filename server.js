@@ -50,6 +50,7 @@ async function ensureDb() {
     await sql`CREATE TABLE IF NOT EXISTS site_images (type VARCHAR(20) PRIMARY KEY, image_data TEXT)`;
     // Ensure columns exist for tables that may have been created before V2
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS card_id INTEGER`;
+    await sql`ALTER TABLE guests ALTER COLUMN tag_uid DROP NOT NULL`;
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS plus_one BOOLEAN DEFAULT false`;
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS plus_one_name TEXT`;
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'`;

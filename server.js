@@ -48,6 +48,14 @@ async function ensureDb() {
     await sql`CREATE TABLE IF NOT EXISTS cards (id SERIAL PRIMARY KEY, uid_hash VARCHAR(64) UNIQUE NOT NULL, status VARCHAR(20) DEFAULT 'unused', created_at TIMESTAMP DEFAULT NOW())`;
     await sql`CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, event_type VARCHAR(50) NOT NULL, card_uid_hash VARCHAR(64), guest_id INTEGER, ip_address VARCHAR(45), user_agent TEXT, details JSONB, created_at TIMESTAMP DEFAULT NOW())`;
     await sql`CREATE TABLE IF NOT EXISTS site_images (type VARCHAR(20) PRIMARY KEY, image_data TEXT)`;
+    // Ensure columns exist for tables that may have been created before V2
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS card_id INTEGER`;
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS plus_one BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS plus_one_name TEXT`;
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'`;
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS registered_at TIMESTAMP DEFAULT NOW()`;
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS checked_in BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS checked_in_at TIMESTAMP`;
     dbReady = true;
   } catch (err) {
     console.error('[db] Setup error:', err.message);

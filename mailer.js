@@ -21,9 +21,6 @@ async function sendWelcomeEmail(guest, rawToken) {
 
   const fromAddress = process.env.FROM_EMAIL || process.env.SMTP_USER;
   
-  // Display token in email (this is the raw token the user needs to present)
-  const displayToken = rawToken || 'N/A';
-
   try {
     await transporter.sendMail({
       from: fromAddress,
@@ -40,12 +37,6 @@ async function sendWelcomeEmail(guest, rawToken) {
             <p style="color: #aaa; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
               Hi <strong style="color: #fff;">${guest.name}</strong>, your registration for <strong style="color: #00d4aa;">Timeless Sunday</strong> is confirmed.
             </p>
-            
-            <div style="background: #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-              <p style="color: #888; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Your Token</p>
-              <p style="color: #00d4aa; font-size: 16px; font-family: monospace; margin: 0; font-weight: 600;">${displayToken}</p>
-              <p style="color: #888; font-size: 11px; margin: 8px 0 0;">Present this token at the event entrance for check-in</p>
-            </div>
             
             <div style="background: #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
               <p style="color: #888; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Event Details</p>

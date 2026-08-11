@@ -341,18 +341,19 @@ function handleCardStatus(data, token) {
   
   switch (data.status) {
     case 'unused':
-      // Token not registered - redirect to registration
-      text.textContent = 'New Token Detected';
-      showStatus('Token not registered. Redirecting to registration...', 'success');
+      // Card not registered - store internally and redirect to registration
+      text.textContent = 'New Card Detected';
+      sessionStorage.setItem('registerToken', token);
+      showStatus('Card not registered. Redirecting to registration...', 'success');
       setTimeout(() => {
-        window.location.href = `register-v2.html?token=${encodeURIComponent(token)}`;
+        window.location.href = 'register-v2.html';
       }, 1500);
       break;
       
     case 'registered':
       // Already registered - show message
       text.textContent = 'Already Registered';
-      showStatus(`This token is already registered to ${data.guest_name}. Please wait until the event day to use it for check-in.`, 'error');
+      showStatus(`${data.guest_name} is already registered. Please wait until the event day to use it for check-in.`, 'error');
       setTimeout(resetUI, 3000);
       break;
       
@@ -365,7 +366,7 @@ function handleCardStatus(data, token) {
       
     default:
       text.textContent = 'Error';
-      showStatus('Unknown token status. Please try again.', 'error');
+      showStatus('Unknown card status. Please try again.', 'error');
       setTimeout(resetUI, 3000);
   }
 }

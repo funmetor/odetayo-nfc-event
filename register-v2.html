@@ -664,14 +664,14 @@ function cancelRegistration() {
   }
 }
 
-// Get token from URL parameters
+// Get token from sessionStorage (set by scan.html) or URL for backward compat
 const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get('token');
+const token = urlParams.get('token') || sessionStorage.getItem('registerToken');
 
 // Show token status if token is present
 if (token) {
   document.getElementById('formDescription').innerHTML = `
-    <span style="color: #00d4aa;">Token detected!</span> Please fill in your details to complete registration.
+    <span style="color: #00d4aa;">Card detected!</span> Please fill in your details to complete registration.
   `;
 }
 
@@ -687,7 +687,7 @@ async function submitRegistration() {
   }
   
   if (!token) {
-    showStatus('No token detected. Please scan your card first.', 'error');
+    showStatus('No card detected. Please scan your card first.', 'error');
     return;
   }
   
@@ -719,12 +719,12 @@ async function submitRegistration() {
     localStorage.setItem('guestName', name);
     localStorage.setItem('guestEmail', email || '');
     localStorage.setItem('guestPhone', fullPhone);
-    localStorage.setItem('token', token);
+    sessionStorage.removeItem('registerToken');
     
     showStatus('Registration successful! Redirecting...', 'success');
     
     setTimeout(() => {
-      window.location.href = `success.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(fullPhone)}&token=${encodeURIComponent(token)}`;
+      window.location.href = `success.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(fullPhone)}`;
     }, 1500);
     
   } catch (err) {

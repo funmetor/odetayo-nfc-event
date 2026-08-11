@@ -494,7 +494,7 @@ body::before {
 
     <div class="input-group">
       <span class="input-icon">🪪</span>
-      <input type="text" class="input-field" id="tag_uid" placeholder="Enter Token (e.g. 04:A2:1F:9C)">
+      <input type="text" class="input-field" id="tag_uid" placeholder="Tap card or enter Card ID">
     </div>
 
     <button class="btn btn-primary" id="checkinBtn" onclick="checkIn()">Check in</button>
@@ -553,7 +553,7 @@ function showStatus(message, type) {
 async function checkIn() {
   const token = document.getElementById('tag_uid').value.trim();
   if (!token) {
-    showStatus('Please enter a Token or scan a card', 'error');
+    showStatus('Please scan your card or enter a Card ID', 'error');
     return;
   }
 

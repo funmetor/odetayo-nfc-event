@@ -273,6 +273,20 @@ body::before {
         style="width: 100%; padding: 16px; background: linear-gradient(145deg, #2e2e2e, #252525); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; color: #fff; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 6px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05); outline: none; transition: all 0.3s ease;">
       <button class="btn btn-primary" onclick="submitManualCard()" style="margin-top: 12px;">Submit</button>
     </div>
+
+    <div id="attendancePrompt" style="display: none;">
+      <div id="attendAsk">
+        <h1 class="title" style="font-size: 22px; margin-bottom: 8px;">Are you attending?</h1>
+        <p class="subtitle" style="margin-bottom: 16px;">We'd love to have you at Timeless Sunday on 26th April 2026.</p>
+        <button class="btn btn-primary" onclick="attendYes()">Yes, I'll be there</button>
+        <button class="btn btn-secondary" onclick="attendNo()">No, I can't make it</button>
+      </div>
+      <div id="attendDeclined" style="display: none;">
+        <h1 class="title" style="font-size: 22px; margin-bottom: 8px;">No worries!</h1>
+        <p class="subtitle" style="margin-bottom: 16px;">We understand your schedule is busy. Thanks for letting us know.</p>
+        <button class="btn btn-primary" onclick="resetAll()">Done</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -341,15 +355,17 @@ function handleCardStatus(data, token) {
   
   switch (data.status) {
     case 'unused':
-      // Card not registered - store internally and redirect to registration
+      // Card not registered - store internally and ask attendance
       text.textContent = 'New Card Detected';
       sessionStorage.setItem('registerToken', token);
-      showStatus('Card not registered. Redirecting to registration...', 'success');
-      setTimeout(() => {
-        window.location.href = 'register-v2.html';
-      }, 1500);
+      showStatus('Card detected!', 'success');
+      document.getElementById('scanBtn').style.display = 'none';
+      document.getElementById('manualBtn').style.display = 'none';
+      document.getElementById('statusBox').className = 'status-box';
+      document.getElementById('attendancePrompt').style.display = 'block';
+      scanning = false;
       break;
-      
+
     case 'registered':
       // Already registered - show message
       text.textContent = 'Already Registered';
@@ -369,6 +385,16 @@ function handleCardStatus(data, token) {
       showStatus('Unknown card status. Please try again.', 'error');
       setTimeout(resetUI, 3000);
   }
+}
+
+function attendYes() {
+  window.location.href = 'register-v2.html';
+}
+
+function attendNo() {
+  document.getElementById('attendAsk').style.display = 'none';
+  document.getElementById('attendDeclined').style.display = 'block';
+  sessionStorage.removeItem('registerToken');
 }
 
 function showManualInput() {
@@ -416,6 +442,20 @@ function resetUI() {
   text.textContent = 'Ready to Scan';
   subtext.textContent = 'Tap the button below and hold your card near your phone';
   document.getElementById('statusBox').className = 'status-box';
+  document.getElementById('attendancePrompt').style.display = 'none';
+  document.getElementById('scanBtn').style.display = 'block';
+  if (!nfcSupported) document.getElementById('manualBtn').style.display = 'block';
+}
+
+function resetAll() {
+  document.getElementById('attendancePrompt').style.display = 'none';
+  document.getElementById('attendAsk').style.display = 'block';
+  document.getElementById('attendDeclined').style.display = 'none';
+  document.getElementById('scanBtn').style.display = 'block';
+  if (!nfcSupported) document.getElementById('manualBtn').style.display = 'block';
+  resetUI();
+  const text = document.getElementById('scanText');
+  text.textContent = 'Ready to Scan';
 }
 </script>
 </body>

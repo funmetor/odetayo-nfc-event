@@ -236,6 +236,33 @@ body::before {
   color: #00d4aa;
 }
 
+.tab-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #222;
+  color: #888;
+  transition: all 0.2s;
+  letter-spacing: -0.2px;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #1D9E75, #00d4aa);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(0, 212, 170, 0.25);
+}
+
 .input-group {
   position: relative;
   margin-bottom: 16px;
@@ -486,15 +513,32 @@ body::before {
     </div>
     
     <p class="form-description">
-      Scan the guest's card or enter their Card ID manually to verify access.
+      Tap the guest's card, scan their QR, or enter their 4-digit check-in code to verify access.
     </p>
 
-    <div class="nfc-scan" id="scanBox">Tap "Scan card" and hold the guest's card to your phone</div>
-    <button class="btn btn-secondary" id="scanBtn">Scan card</button>
+    <div class="tab-nav">
+      <button type="button" class="tab-btn active" id="tabCard" onclick="switchTab('card')">📡 Tap Card</button>
+      <button type="button" class="tab-btn" id="tabCode" onclick="switchTab('code')">🔢 Code</button>
+      <button type="button" class="tab-btn" id="tabQr" onclick="switchTab('qr')">📷 Scan QR</button>
+    </div>
 
-    <div class="input-group">
-      <span class="input-icon">🪪</span>
-      <input type="text" class="input-field" id="tag_uid" placeholder="Tap card or enter Card ID">
+    <div id="viewCard">
+      <div class="nfc-scan" id="scanBox">Tap "Scan card" and hold the guest's card to your phone</div>
+      <button class="btn btn-secondary" id="scanBtn">Scan card</button>
+    </div>
+
+    <div id="viewCode" style="display: none;">
+      <div class="input-group" style="text-align: center;">
+        <input type="text" class="input-field" id="codeInput" placeholder="Enter 4-digit code" style="text-align: center; letter-spacing: 8px; font-size: 24px; font-family: monospace; padding-left: 16px;" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+      </div>
+    </div>
+
+    <div id="viewQr" style="display: none;">
+      <div class="nfc-scan" id="qrBox">Tap "Start scanner" and hold the guest's QR code in view</div>
+      <div id="qrPreview" style="display: none; margin-bottom: 16px;">
+        <video id="qrVideo" playsinline muted style="width: 100%; border-radius: 12px;"></video>
+      </div>
+      <button class="btn btn-secondary" id="qrBtn">Start scanner</button>
     </div>
 
     <button class="btn btn-primary" id="checkinBtn" onclick="checkIn()">Check in</button>
@@ -517,10 +561,35 @@ body::before {
 </div>
 
 <script>
+let currentTab = 'card';
+let qrStream = null;
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabCard').classList.toggle('active', tab === 'card');
+  document.getElementById('tabCode').classList.toggle('active', tab === 'code');
+  document.getElementById('tabQr').classList.toggle('active', tab === 'qr');
+  document.getElementById('viewCard').style.display = tab === 'card' ? 'block' : 'none';
+  document.getElementById('viewCode').style.display = tab === 'code' ? 'block' : 'none';
+  document.getElementById('viewQr').style.display = tab === 'qr' ? 'block' : 'none';
+  stopQrScanner();
+  
+  const btn = document.getElementById('checkinBtn');
+  btn.textContent = tab === 'qr' ? 'Check in with QR' : tab === 'code' ? 'Check in with code' : 'Check in';
+  btn.disabled = false;
+  
+  const card = document.getElementById('resultCard');
+  card.classList.remove('show');
+  
+  if (tab === 'code') {
+    document.getElementById('codeInput').focus();
+  }
+}
+
 async function scanNfc() {
   const box = document.getElementById('scanBox');
   if (!('NDEFReader' in window)) {
-    box.textContent = 'Web NFC not supported on this browser (use Chrome on Android). Type the card ID manually below.';
+    box.textContent = 'Web NFC not supported on this browser (use Chrome on Android). Use the Code or Scan QR tab instead.';
     return;
   }
   try {
@@ -529,9 +598,8 @@ async function scanNfc() {
     box.textContent = 'Ready — hold the card near your phone...';
     box.classList.add('ready');
     reader.onreading = (event) => {
-      document.getElementById('tag_uid').value = event.serialNumber;
-      box.textContent = 'Card detected: ' + event.serialNumber;
-      checkIn();
+      document.getElementById('scanBox').textContent = 'Card detected: ' + event.serialNumber;
+      checkToken(event.serialNumber);
     };
   } catch (err) {
     box.textContent = 'Could not start NFC scan: ' + err.message;
@@ -539,6 +607,10 @@ async function scanNfc() {
 }
 
 document.getElementById('scanBtn').addEventListener('click', scanNfc);
+document.getElementById('qrBtn').addEventListener('click', startQrScanner);
+document.getElementById('codeInput').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 4);
+});
 
 function showStatus(message, type) {
   const status = document.getElementById('statusMessage');
@@ -551,21 +623,47 @@ function showStatus(message, type) {
 }
 
 async function checkIn() {
-  const token = document.getElementById('tag_uid').value.trim();
-  if (!token) {
-    showStatus('Please scan your card or enter a Card ID', 'error');
+  if (currentTab === 'card') {
+    document.getElementById('scanBox').textContent = 'Tap "Scan card" and hold the guest\'s card to your phone';
+    document.getElementById('scanBox').classList.remove('ready');
+    showStatus('Please tap the "Scan card" button and hold the card to the phone', 'error');
     return;
   }
+  
+  if (currentTab === 'code') {
+    const code = document.getElementById('codeInput').value.trim();
+    if (!/^\d{4}$/.test(code)) {
+      showStatus('Please enter the guest\'s 4-digit check-in code', 'error');
+      return;
+    }
+    checkToken(null, code);
+    return;
+  }
+  
+  if (currentTab === 'qr') {
+    const code = document.getElementById('codeInput').value.trim();
+    if (!/^\d{4}$/.test(code)) {
+      showStatus('Scan a QR first (or check in via Code tab)', 'error');
+      return;
+    }
+    checkToken(null, code);
+  }
+}
 
+async function checkToken(token, code) {
   const btn = document.getElementById('checkinBtn');
   btn.disabled = true;
   btn.textContent = 'Checking in...';
 
   try {
+    const body = {};
+    if (token) body.token = token;
+    if (code) body.code = code;
+    
     const res = await fetch('/api/checkin-v2', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
+      body: JSON.stringify(body)
     });
     const data = await res.json();
 
@@ -575,6 +673,8 @@ async function checkIn() {
     const status = document.getElementById('resultStatus');
     
     card.classList.add('show');
+    stopQrScanner();
+    if (currentTab === 'qr') document.getElementById('qrPreview').style.display = 'none';
 
     if (data.status === 'granted') {
       card.className = 'result-card show result-granted';
@@ -593,16 +693,69 @@ async function checkIn() {
     } else {
       card.className = 'result-card show result-denied';
       icon.textContent = '✕';
-      name.textContent = 'Unknown card';
+      name.textContent = 'Unknown';
       status.textContent = 'Not registered';
       status.className = 'result-status denied';
-      showStatus('Card not found in system', 'error');
+      showStatus(code ? 'Code not found in system' : 'Card not found in system', 'error');
     }
   } catch (err) {
     showStatus(err.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Check in';
+    if (currentTab === 'card') btn.textContent = 'Check in';
+    else if (currentTab === 'code') btn.textContent = 'Check in with code';
+    else btn.textContent = 'Check in with QR';
+  }
+}
+
+async function startQrScanner() {
+  const box = document.getElementById('qrBox');
+  const preview = document.getElementById('qrPreview');
+  
+  if (!('BarcodeDetector' in window)) {
+    box.textContent = 'QR scanning not supported on this browser. Use the Code tab to enter the 4-digit code.';
+    return;
+  }
+  
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.getElementById('qrVideo');
+    video.srcObject = qrStream;
+    await video.play();
+    preview.style.display = 'block';
+    box.textContent = 'Scanning...';
+    
+    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+    
+    const tick = async () => {
+      if (!video || video.readyState < 2) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      try {
+        const codes = await detector.detect(video);
+        if (codes.length > 0) {
+          const raw = (codes[0].rawValue || '').trim();
+          if (/^\d{4}$/.test(raw)) {
+            document.getElementById('codeInput').value = raw;
+            box.textContent = 'QR detected: ' + raw;
+            checkToken(null, raw);
+            return;
+          }
+        }
+      } catch {}
+      requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (err) {
+    box.textContent = 'Could not start camera: ' + err.message;
+  }
+}
+
+function stopQrScanner() {
+  if (qrStream) {
+    qrStream.getTracks().forEach(t => t.stop());
+    qrStream = null;
   }
 }
 

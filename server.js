@@ -50,6 +50,7 @@ async function ensureDb() {
     await sql`CREATE TABLE IF NOT EXISTS site_images (type VARCHAR(20) PRIMARY KEY, image_data TEXT)`;
     // Ensure columns exist for tables that may have been created before V2
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS card_id INTEGER`;
+    await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS code VARCHAR(6)`;
     await sql`ALTER TABLE guests ALTER COLUMN tag_uid DROP NOT NULL`;
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS plus_one BOOLEAN DEFAULT false`;
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS plus_one_name TEXT`;
@@ -147,8 +148,9 @@ const registerSchema = z.object({
 });
 
 const checkinSchema = z.object({
-  token: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid token format')
-});
+  token: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid token format').optional(),
+  code: z.string().regex(/^\d{4}$/, 'Invalid code format').optional()
+}).refine(d => d.token || d.code, { message: 'Provide a token or a code' });
 
 // ---- Invite list lookup (for plus-one eligibility) ----
 app.get('/api/invites/search', async (req, res) => {
@@ -252,6 +254,15 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
       }
     }
     
+    // Generate a unique 4-digit check-in code
+    let code;
+    let codeTaken = true;
+    while (codeTaken) {
+      code = String(Math.floor(1000 + Math.random() * 9000));
+      const dup = await sql`SELECT id FROM guests WHERE code = ${code}`;
+      codeTaken = dup.length > 0;
+    }
+    
     // Create or get card record
     let cardId;
     if (existingCards.length > 0) {
@@ -269,8 +280,8 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
     
     // Create guest record
     const guests = await sql`
-      INSERT INTO guests (card_id, name, email, phone, status)
-      VALUES (${cardId}, ${name}, ${email || null}, ${phone}, 'confirmed')
+      INSERT INTO guests (card_id, name, email, phone, code, status)
+      VALUES (${cardId}, ${name}, ${email || null}, ${phone}, ${code}, 'confirmed')
       RETURNING *
     `;
     const guest = guests[0];
@@ -281,13 +292,13 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
       guest_id: guest.id,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
-      details: { name, email, phone }
+      details: { name, email, phone, code }
     });
     
-    // Send confirmation email with token
+    // Send confirmation email with 4-digit code + QR
     let emailResult = { sent: false };
     if (email) {
-      emailResult = await sendWelcomeEmail(guest, token);
+      emailResult = await sendWelcomeEmail(guest, code);
     }
     
     res.json({ 
@@ -320,36 +331,59 @@ app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
     });
   }
   
-  const { token } = result.data;
-  const tokenHash = hashCardUID(token);
+  const { token, code } = result.data;
   
   try {
-    const cards = await sql`SELECT * FROM cards WHERE uid_hash = ${tokenHash}`;
+    let card = null;
+    let guest = null;
+    let tokenHash = null;
     
-    if (cards.length === 0) {
-      await logAuditEvent('checkin_attempt_not_registered', {
-        card_uid_hash: tokenHash,
-        ip_address: req.ip,
-        user_agent: req.headers['user-agent']
-      });
+    // Look up by card token OR by 4-digit code
+    if (token) {
+      tokenHash = hashCardUID(token);
+      const cards = await sql`SELECT * FROM cards WHERE uid_hash = ${tokenHash}`;
       
-      return res.json({ status: 'not_registered', token });
-    }
-    
-    const card = cards[0];
-    const guests = await sql`SELECT * FROM guests WHERE card_id = ${card.id}`;
-    
-    if (guests.length === 0) {
-      await logAuditEvent('checkin_attempt_no_guest', {
-        card_uid_hash: tokenHash,
-        ip_address: req.ip,
-        user_agent: req.headers['user-agent']
-      });
+      if (cards.length === 0) {
+        await logAuditEvent('checkin_attempt_not_registered', {
+          card_uid_hash: tokenHash,
+          ip_address: req.ip,
+          user_agent: req.headers['user-agent']
+        });
+        
+        return res.json({ status: 'not_registered', token });
+      }
       
-      return res.json({ status: 'not_registered', token });
+      card = cards[0];
+      const guests = await sql`SELECT * FROM guests WHERE card_id = ${card.id}`;
+      guest = guests.length > 0 ? guests[0] : null;
+      
+      if (!guest) {
+        await logAuditEvent('checkin_attempt_no_guest', {
+          card_uid_hash: tokenHash,
+          ip_address: req.ip,
+          user_agent: req.headers['user-agent']
+        });
+        
+        return res.json({ status: 'not_registered', token });
+      }
+    } else if (code) {
+      const guests = await sql`SELECT * FROM guests WHERE code = ${code}`;
+      if (guests.length === 0) {
+        await logAuditEvent('checkin_attempt_invalid_code', {
+          ip_address: req.ip,
+          user_agent: req.headers['user-agent'],
+          details: { code }
+        });
+        
+        return res.json({ status: 'not_registered', code });
+      }
+      guest = guests[0];
+      if (guest.card_id) {
+        const cards = await sql`SELECT * FROM cards WHERE id = ${guest.card_id}`;
+        card = cards.length > 0 ? cards[0] : null;
+        tokenHash = card ? card.uid_hash : null;
+      }
     }
-    
-    const guest = guests[0];
     
     if (guest.checked_in) {
       await logAuditEvent('checkin_attempt_already_used', {
@@ -376,7 +410,7 @@ app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
     `;
     
     // Update card status
-    await sql`UPDATE cards SET status = 'checked_in' WHERE id = ${card.id}`;
+    if (card) await sql`UPDATE cards SET status = 'checked_in' WHERE id = ${card.id}`;
     
     // Log successful check-in
     await logAuditEvent('checkin', {
@@ -384,7 +418,7 @@ app.post('/api/checkin-v2', checkinLimiter, async (req, res) => {
       guest_id: guest.id,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
-      details: { name: guest.name }
+      details: { name: guest.name, method: token ? 'card' : 'code' }
     });
     
     res.json({ 

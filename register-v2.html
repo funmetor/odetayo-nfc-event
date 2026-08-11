@@ -458,6 +458,69 @@ body::before {
   border: 1px solid rgba(231, 76, 60, 0.25);
 }
 
+.summary-screen {
+  margin-top: 8px;
+}
+
+.summary-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin-bottom: 6px;
+}
+
+.summary-subtitle {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: linear-gradient(145deg, #1e1e1e, #181818);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 8px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 8px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.summary-note {
+  font-size: 12px;
+  color: #00d4aa;
+  background: rgba(29, 158, 117, 0.1);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 10px;
+  padding: 12px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
 @media screen and (max-width: 375px) {
   .mobile-container {
     box-shadow: none;
@@ -528,7 +591,8 @@ body::before {
 
     <div class="input-group">
       <span class="input-icon">✉️</span>
-      <input type="email" class="input-field" id="email" placeholder="Enter Email Address (Optional)" autocomplete="email">
+      <input type="email" class="input-field" id="email" placeholder="Enter Email Address" required autocomplete="email">
+      <span class="required-star">*</span>
     </div>
 
     <div class="action-links">
@@ -555,9 +619,33 @@ body::before {
 
     <div class="button-group">
       <button type="button" class="btn btn-cancel" onclick="cancelRegistration()">Cancel</button>
-      <button type="button" class="btn btn-confirm" id="confirmBtn" onclick="submitRegistration()">Confirm</button>
+      <button type="button" class="btn btn-confirm" id="confirmBtn" onclick="showSummary()">Confirm</button>
     </div>
   </form>
+
+  <div class="summary-screen" id="summaryScreen" style="display: none;">
+    <div class="summary-title">Confirm your details</div>
+    <p class="summary-subtitle">Please verify that your email address is correct before we send your check-in code.</p>
+    <div class="summary-card">
+      <div class="summary-row">
+        <span class="summary-label">Name</span>
+        <span class="summary-value" id="sumName"></span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Phone</span>
+        <span class="summary-value" id="sumPhone"></span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Email</span>
+        <span class="summary-value" id="sumEmail"></span>
+      </div>
+    </div>
+    <div class="summary-note">Your 4-digit check-in code and QR will be sent to this email. If it's wrong, you won't receive it.</div>
+    <div class="button-group">
+      <button type="button" class="btn btn-cancel" onclick="hideSummary()">Edit details</button>
+      <button type="button" class="btn btn-confirm active" id="sendBtn" onclick="submitRegistration()">Confirm & Send</button>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -636,7 +724,8 @@ function autoFillDetails() {
 function updateConfirmButton() {
   const name = document.getElementById('fullName').value.trim();
   const phone = document.getElementById('phone').value.trim();
-  const hasRequiredFields = name && phone;
+  const email = document.getElementById('email').value.trim();
+  const hasRequiredFields = name && phone && email && /.+@.+\..+/.test(email);
   
   const btn = document.getElementById('confirmBtn');
   if (hasRequiredFields) {
@@ -675,7 +764,7 @@ if (token) {
   `;
 }
 
-async function submitRegistration() {
+function showSummary() {
   const name = document.getElementById('fullName').value.trim();
   const phone = document.getElementById('phone').value.trim();
   const email = document.getElementById('email').value.trim();
@@ -686,14 +775,50 @@ async function submitRegistration() {
     return;
   }
   
+  if (!email || !/.+@.+\..+/.test(email)) {
+    showStatus('An email address is required — your check-in code and QR will be sent there.', 'error');
+    document.getElementById('email').focus();
+    return;
+  }
+  
   if (!token) {
     showStatus('No card detected. Please scan your card first.', 'error');
     return;
   }
   
-  const btn = document.getElementById('confirmBtn');
+  document.getElementById('sumName').textContent = name;
+  document.getElementById('sumPhone').textContent = countryCode + phone;
+  document.getElementById('sumEmail').textContent = email;
+  
+  document.getElementById('registrationForm').style.display = 'none';
+  document.getElementById('summaryScreen').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hideSummary() {
+  document.getElementById('summaryScreen').style.display = 'none';
+  document.getElementById('registrationForm').style.display = 'block';
+}
+
+async function submitRegistration() {
+  const name = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const countryCode = document.getElementById('countryCode').value;
+  
+  if (!name || !phone || !email || !/.+@.+\..+/.test(email)) {
+    showSummary();
+    return;
+  }
+  
+  if (!token) {
+    showStatus('No card detected. Please scan your card first.', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('sendBtn');
   btn.disabled = true;
-  btn.textContent = 'Confirming...';
+  btn.textContent = 'Sending...';
   
   try {
     const fullPhone = countryCode + phone;
@@ -701,7 +826,7 @@ async function submitRegistration() {
     const guestData = {
       token: token,
       name,
-      email: email || undefined,
+      email,
       phone: fullPhone
     };
     
@@ -717,21 +842,21 @@ async function submitRegistration() {
     
     // Store registration details for success page
     localStorage.setItem('guestName', name);
-    localStorage.setItem('guestEmail', email || '');
+    localStorage.setItem('guestEmail', email);
     localStorage.setItem('guestPhone', fullPhone);
     sessionStorage.removeItem('registerToken');
     
     showStatus('Registration successful! Redirecting...', 'success');
     
     setTimeout(() => {
-      window.location.href = `success.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(fullPhone)}`;
+      window.location.href = `success.html?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(fullPhone)}`;
     }, 1500);
     
   } catch (err) {
     showStatus(err.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Confirm';
+    btn.textContent = 'Confirm & Send';
     updateConfirmButton();
   }
 }

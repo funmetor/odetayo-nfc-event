@@ -12,7 +12,7 @@ function getTransporter() {
   });
 }
 
-async function sendWelcomeEmail(guest, rawToken) {
+async function sendWelcomeEmail(guest, code) {
   const transporter = getTransporter();
   if (!transporter) {
     console.log(`[mailer] SMTP not configured — skipping email to ${guest.email}`);
@@ -20,12 +20,16 @@ async function sendWelcomeEmail(guest, rawToken) {
   }
 
   const fromAddress = process.env.FROM_EMAIL || process.env.SMTP_USER;
-  
+
+  // QR encodes the same 4-digit code
+  const qrData = encodeURIComponent(code);
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${qrData}`;
+
   try {
     await transporter.sendMail({
       from: fromAddress,
       to: guest.email,
-      subject: 'Registration Confirmed — Timeless Sunday',
+      subject: 'You\'re Confirmed — Timeless Sunday',
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; background: #121212; border-radius: 12px; overflow: hidden;">
           <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 32px 24px; text-align: center;">
@@ -44,10 +48,17 @@ async function sendWelcomeEmail(guest, rawToken) {
               <p style="color: #fff; font-size: 14px; margin: 0 0 4px;">📍 Epe & Lekki Phase 1</p>
               <p style="color: #fff; font-size: 14px; margin: 0;">🕐 2:00 PM</p>
             </div>
-            
+
+            <div style="background: linear-gradient(135deg, #1a2a1a, #16213e); border: 1px solid rgba(0, 212, 170, 0.4); border-radius: 12px; padding: 24px; margin-bottom: 20px; text-align: center;">
+              <p style="color: #888; font-size: 12px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.5px;">Your Check-in Code</p>
+              <p style="color: #00d4aa; font-size: 44px; font-family: monospace; margin: 0 0 16px; font-weight: 700; letter-spacing: 8px;">${code}</p>
+              <img src="${qrUrl}" alt="QR Code" style="width: 180px; height: 180px; border-radius: 8px;" />
+              <p style="color: #888; font-size: 12px; margin: 12px 0 0;">Present your code or scan your QR at the event entrance</p>
+            </div>
+
             <div style="background: #1a2a1a; border: 1px solid rgba(0, 212, 170, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
               <p style="color: #00d4aa; font-size: 14px; margin: 0; line-height: 1.5;">
-                <strong>Important:</strong> Bring your NFC card to the event. Tap it at the entrance for check-in.
+                <strong>Important:</strong> You can check in on the day by tapping your NFC card, entering your 4-digit code, or scanning your QR at the entrance.
               </p>
             </div>
             

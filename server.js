@@ -72,7 +72,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'"]
     }
@@ -151,6 +152,14 @@ const checkinSchema = z.object({
   token: z.string().min(1).max(50).regex(/^[A-F0-9:]+$/i, 'Invalid token format').optional(),
   code: z.string().regex(/^\d{4}$/, 'Invalid code format').optional()
 }).refine(d => d.token || d.code, { message: 'Provide a token or a code' });
+
+const rsvpSchema = z.object({
+  name: z.string().min(2).max(100).trim(),
+  email: z.string().email('Invalid email format').min(3),
+  plus_one: z.boolean().optional().default(false),
+  plus_one_name: z.string().max(100).optional().or(z.literal('')),
+  attending: z.boolean().optional().default(true)
+});
 
 // ---- Invite list lookup (for plus-one eligibility) ----
 app.get('/api/invites/search', async (req, res) => {
@@ -316,6 +325,72 @@ app.post('/api/register-v2', registrationLimiter, async (req, res) => {
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ error: 'Registration failed. Please try again.' });
+  }
+});
+
+// ---- RSVP (cardless) ----
+app.post('/api/rsvp', registrationLimiter, async (req, res) => {
+  await ensureDb();
+  
+  const result = rsvpSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({
+      error: 'Invalid input',
+      details: result.error.issues.map(i => i.message)
+    });
+  }
+  
+  const { name, email, plus_one, plus_one_name, attending } = result.data;
+  
+  try {
+    // If attending, generate a unique 4-digit check-in code
+    let code = null;
+    if (attending) {
+      let codeTaken = true;
+      while (codeTaken) {
+        code = String(Math.floor(1000 + Math.random() * 9000));
+        const dup = await sql`SELECT id FROM guests WHERE code = ${code}`;
+        codeTaken = dup.length > 0;
+      }
+    } else {
+      code = null;
+    }
+    
+    const guests = await sql`
+      INSERT INTO guests (name, email, plus_one, plus_one_name, code, status)
+      VALUES (${name}, ${email}, ${!!plus_one}, ${plus_one ? (plus_one_name || null) : null}, ${code}, ${attending ? 'confirmed' : 'declined'})
+      RETURNING *
+    `;
+    const guest = guests[0];
+    
+    await logAuditEvent('rsvp', {
+      guest_id: guest.id,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      details: { name, email, plus_one: !!plus_one, attending }
+    });
+    
+    let emailResult = { sent: false };
+    if (attending) {
+      emailResult = await sendWelcomeEmail(guest, code);
+    }
+    
+    res.json({
+      ok: true,
+      guest: {
+        id: guest.id,
+        name: guest.name,
+        email: guest.email,
+        plus_one: guest.plus_one,
+        plus_one_name: guest.plus_one_name,
+        attending
+      },
+      email: emailResult
+    });
+    
+  } catch (err) {
+    console.error('RSVP error:', err);
+    res.status(500).json({ error: 'Could not save your RSVP. Please try again.' });
   }
 });
 

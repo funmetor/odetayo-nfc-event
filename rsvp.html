@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're Invited — Team Odetayo</title>
+  <meta name="theme-color" content="#0B3D2E" />
+  <meta name="robots" content="noindex, nofollow" />
+  <!-- Share preview (WhatsApp / iMessage / social) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="You're Invited — Team Odetayo" />
+  <meta property="og:description" content="Two families, one joyful celebration — and we'd love you there. Tap to RSVP. #TeamOdetayo" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="You're Invited — Team Odetayo" />
+  <meta name="twitter:description" content="Two families, one joyful celebration — and we'd love you there. Tap to RSVP." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+/* ─────────────────────────────────────────────────────────────────────
+   Team Odetayo — guest invitation. "Aso-Oke Royal": deep emerald + antique
+   gold + coral, ivory ground. Display: Cormorant Garamond. UI: Jost.
+   This page has its own world, separate from the staff tools.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --emerald:      #0B3D2E;
+  --emerald-deep: #072A1F;
+  --gold:         #C9A227;
+  --gold-soft:    #E4C874;
+  --coral:        #B33A3A;
+  --ivory:        #F6F1E7;
+  --ivory-dim:    #ECE3D2;
+  --ink:          #22271F;
+  --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --sans:  "Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--emerald);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.eyebrow {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: clamp(.62rem, 2.4vw, .74rem);
+  letter-spacing: .42em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  margin: 0 0 22px;
+}
+.eyebrow-dark { color: var(--gold); }
+
+/* ── HERO ─────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: clamp(48px, 8vw, 96px) 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 78% at 50% -10%, rgba(201,162,39,.14), transparent 58%),
+    radial-gradient(140% 90% at 50% 120%, rgba(7,42,31,.75), transparent 55%),
+    var(--emerald);
+}
+/* engraved-invitation frame — gives wide screens structure, not an empty void */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: clamp(14px, 2.4vw, 30px);
+  border: 1px solid rgba(201,162,39,.32);
+  box-shadow: inset 0 0 0 4px rgba(201,162,39,.06);
+  pointer-events: none;
+  z-index: 1;
+}
+.hero-inner { position: relative; z-index: 2; max-width: 760px; width: 100%; }
+
+/* monogram crest — the signature seal */
+.crest {
+  position: relative;
+  width: clamp(88px, 20vw, 108px);
+  aspect-ratio: 1;
+  margin: 0 auto 30px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--gold);
+}
+.crest::before {
+  content: ""; position: absolute; inset: 7px;
+  border-radius: 50%; border: 1px solid rgba(201,162,39,.55);
+}
+.crest-initials {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 5vw, 1.9rem);
+  letter-spacing: .08em;
+  color: var(--gold-soft);
+}
+
+/* wordmark: small "Team" over grand "Odetayo" */
+.wordmark { margin: 0; display: flex; flex-direction: column; align-items: center; }
+.w-top {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: clamp(1rem, 4vw, 1.5rem);
+  letter-spacing: .5em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  padding-left: .5em; /* optical centering for the letter-spacing */
+  margin-bottom: clamp(6px, 1.4vw, 12px);
+}
+.w-main {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(3.4rem, 16vw, 8rem);
+  line-height: .92;
+  letter-spacing: .01em;
+  color: var(--ivory);
+}
+
+/* ornamental gold rule */
+.rule {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  margin: clamp(22px, 4vw, 34px) auto clamp(20px, 3.4vw, 28px); max-width: 340px;
+}
+.rule span { height: 1px; flex: 1; max-width: 110px; background: linear-gradient(90deg, transparent, var(--gold)); }
+.rule span:last-child { background: linear-gradient(90deg, var(--gold), transparent); }
+.rule i { color: var(--gold); font-style: normal; font-size: 1.1rem; line-height: 1; }
+
+.sub {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(1.2rem, 4.4vw, 1.7rem);
+  line-height: 1.35;
+  color: var(--ivory);
+  margin: 0 auto;
+  max-width: 30ch;
+}
+.detail-tbd {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: clamp(.68rem, 2.6vw, .78rem);
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(246,241,231,.66);
+  margin: 18px 0 0;
+}
+.detail-tbd.extras { letter-spacing: .16em; }
+
+.btn-gold {
+  display: inline-block;
+  margin-top: clamp(30px, 5vw, 42px);
+  padding: 16px 42px;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: .74rem;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--emerald-deep);
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  border: none; border-radius: 2px; cursor: pointer;
+  box-shadow: 0 10px 30px -12px rgba(201,162,39,.6);
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+.btn-gold:hover { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 16px 36px -12px rgba(201,162,39,.7); }
+.btn-gold:active { transform: translateY(0); }
+
+.team {
+  margin-top: clamp(26px, 4vw, 34px);
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: .72rem;
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.scroll-cue {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 3; color: var(--gold); text-decoration: none; font-size: 1.4rem; line-height: 1;
+  animation: bob 2.4s ease-in-out infinite;
+}
+@keyframes bob { 0%,100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 7px); } }
+
+/* ── RSVP SECTION ─────────────────────────────────────────────────── */
+.rsvp {
+  background: var(--ivory);
+  color: var(--ink);
+  padding: clamp(56px, 12vw, 104px) 24px clamp(64px, 12vw, 96px);
+  text-align: center;
+  border-top: 3px solid var(--gold);
+}
+.rsvp-title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 7vw, 3rem);
+  line-height: 1.05;
+  margin: 12px 0 34px;
+  color: var(--emerald);
+}
+.card {
+  max-width: 480px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid var(--ivory-dim);
+  border-radius: 10px;
+  box-shadow: 0 24px 60px -32px rgba(11,61,46,.4);
+  padding: 32px 28px;
+  text-align: left;
+}
+.foot {
+  max-width: 480px; margin: 22px auto 0;
+  font-family: var(--sans); font-weight: 300; font-size: .82rem;
+  color: rgba(34,39,31,.6); text-align: center;
+}
+
+/* ── flow: attend / decline ──────────────────────────────────────── */
+.attend-q {
+  font-family: var(--serif); font-weight: 500;
+  font-size: 1.4rem; color: var(--emerald); margin: 0 0 4px;
+  text-align: center;
+}
+.attend-sub {
+  font-family: var(--sans); font-weight: 300; font-size: .9rem;
+  color: rgba(34,39,31,.6); margin: 0 0 22px; text-align: center;
+}
+.attend-buttons { display: grid; gap: 12px; }
+.btn-attend {
+  width: 100%; padding: 16px;
+  font-family: var(--sans); font-weight: 500; font-size: .82rem;
+  letter-spacing: .6px; color: #fff; border: none; border-radius: 7px;
+  cursor: pointer; transition: transform .2s, filter .2s, box-shadow .2s;
+}
+.btn-attend.yes {
+  background: linear-gradient(180deg, var(--emerald), var(--emerald-deep));
+  box-shadow: 0 8px 22px -10px rgba(11,61,46,.55);
+}
+.btn-attend.no {
+  background: #fff; color: var(--coral);
+  border: 1px solid var(--ivory-dim);
+}
+.btn-attend:hover { transform: translateY(-2px); filter: brightness(1.04); }
+
+/* ── form controls (rendered by rsvp.js) ────────────────────────── */
+.field-label {
+  display: block;
+  font-family: var(--sans); font-weight: 500;
+  font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--emerald); margin: 20px 0 9px;
+}
+.field-label:first-child { margin-top: 0; }
+.text-input {
+  width: 100%; padding: 14px 15px;
+  font-family: var(--serif); font-size: 1.15rem; color: var(--ink);
+  background: var(--ivory); border: 1px solid var(--ivory-dim);
+  border-radius: 7px; transition: border-color .2s, box-shadow .2s;
+}
+.text-input::placeholder { color: rgba(34,39,31,.4); font-style: italic; }
+.text-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,162,39,.18); }
+
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.choice button {
+  padding: 14px 12px;
+  font-family: var(--sans); font-weight: 500; font-size: .82rem;
+  letter-spacing: .04em; color: var(--emerald);
+  background: #fff; border: 1px solid var(--ivory-dim); border-radius: 7px;
+  cursor: pointer; transition: all .2s;
+}
+.choice button:hover { border-color: var(--gold); }
+.choice button[aria-pressed="true"] {
+  background: var(--emerald); border-color: var(--emerald); color: var(--ivory);
+}
+.choice button[aria-pressed="true"].is-coral { background: var(--coral); border-color: var(--coral); }
+
+.submit {
+  width: 100%; margin-top: 26px; padding: 16px;
+  font-family: var(--sans); font-weight: 500; font-size: .74rem;
+  letter-spacing: .24em; text-transform: uppercase;
+  color: var(--emerald-deep);
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  border: none; border-radius: 6px; cursor: pointer;
+  transition: transform .2s, filter .2s;
+}
+.submit:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.submit:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+.msg { font-family: var(--sans); font-size: .82rem; color: var(--coral); margin: 12px 0 0; min-height: 1em; }
+.note { font-family: var(--sans); font-weight: 300; font-size: .92rem; line-height: 1.5; color: rgba(34,39,31,.68); margin: 0; }
+
+/* success / RSVP-received state */
+.done { text-align: center; padding: 8px 4px; }
+.done .seal {
+  width: 62px; height: 62px; margin: 0 auto 16px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 1.6rem; color: var(--gold);
+  border: 1px solid var(--gold); box-shadow: inset 0 0 0 4px rgba(201,162,39,.2);
+}
+.done h3 {
+  font-family: var(--serif); font-weight: 600; font-size: 1.7rem;
+  color: var(--emerald); margin: 0 0 8px;
+}
+.done p { font-family: var(--sans); font-weight: 300; color: var(--ink); margin: 0; line-height: 1.5; }
+.done.decline .seal { color: var(--emerald); border-color: var(--emerald); box-shadow: inset 0 0 0 4px rgba(11,61,46,.14); }
+
+/* ── entrance choreography ────────────────────────────────────────── */
+.hero-inner > * { opacity: 0; transform: translateY(16px); animation: rise .9s cubic-bezier(.2,.7,.2,1) forwards; }
+.crest       { animation-delay: .05s; }
+.eyebrow     { animation-delay: .28s; }
+.wordmark    { animation-delay: .44s; }
+.rule        { animation-delay: .74s; }
+.sub         { animation-delay: .88s; }
+.detail-tbd  { animation-delay: 1.0s; }
+.hero-cta    { animation-delay: 1.16s; }
+.team        { animation-delay: 1.32s; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-inner > *, .scroll-cue { animation: none; opacity: 1; transform: none; }
+}
+
+.hidden { display: none !important; }
+
+/* acceptance confetti */
+.confetti-piece {
+  position: fixed; top: -24px; z-index: 60; border-radius: 1px;
+  pointer-events: none; will-change: transform;
+  animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--x, 0), 110vh) rotate(var(--r, 360deg)); opacity: .85; }
+}
+@media (prefers-reduced-motion: reduce) { .confetti-piece { display: none; } }
+.opt {
+  font-family: var(--sans); font-weight: 300; text-transform: none;
+  letter-spacing: normal; color: rgba(34,39,31,.5); font-size: .78rem;
+}
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+<main>
+  <!-- ══ HERO / INTRO ══════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero-inner" id="hero-inner">
+      <div class="crest" aria-hidden="true"><span class="crest-initials">TO</span></div>
+
+      <p class="eyebrow">You&rsquo;re invited to celebrate</p>
+
+      <h1 class="wordmark">
+        <span class="w-top">Team</span>
+        <span class="w-main">Odetayo</span>
+      </h1>
+
+      <div class="rule" aria-hidden="true"><span></span><i>&#10086;</i><span></span></div>
+
+      <p class="sub">Two families, one joyful celebration&nbsp;&mdash;<br />and we&rsquo;d love you there.</p>
+      <p class="detail-tbd">26th April 2026 &middot; Epe &amp; Lekki Phase 1 &middot; 2:00 PM</p>
+
+      <a href="#rsvp" class="btn-gold hero-cta">Respond to your invitation</a>
+      <p class="team">#TeamOdetayo</p>
+    </div>
+
+    <a href="#rsvp" class="scroll-cue" aria-label="Scroll to RSVP">&#8964;</a>
+  </section>
+
+  <!-- ══ RSVP ══════════════════════════════════════════════════════════ -->
+  <section class="rsvp" id="rsvp">
+    <p class="eyebrow eyebrow-dark">Kindly respond</p>
+    <h2 class="rsvp-title">Will you celebrate with us?</h2>
+    <div id="app" class="card">Loading&hellip;</div>
+    <p class="foot">Bring your card to the celebration — tap or scan it at the door.</p>
+  </section>
+</main>
+
+<script>
+const app = document.getElementById('app');
+const h = (html) => { app.innerHTML = html; };
+
+function renderPrompt() {
+  h(`
+    <p class="attend-q">Will you be attending?</p>
+    <p class="attend-sub">We'd love to celebrate with you on the 26th of April.</p>
+    <div class="attend-buttons">
+      <button class="btn-attend yes" onclick="chooseYes()">Yes, I will attend</button>
+      <button class="btn-attend no" onclick="chooseNo()">No, I can't make it</button>
+    </div>
+  `);
+}
+
+function chooseYes() {
+  const state = { plus_one: false };
+  h(`
+    <label class="field-label" for="name">Full name</label>
+    <input id="name" class="text-input" type="text" placeholder="First and last name" autocomplete="name" />
+
+    <label class="field-label" for="email">Email address</label>
+    <input id="email" class="text-input" type="email" placeholder="you@example.com" autocomplete="email" />
+
+    <label class="field-label">Bringing a plus-one?</label>
+    <div class="choice" role="group" aria-label="Plus one">
+      <button type="button" class="is-coral" data-plus="yes" onclick="setPlus(this, true, state)">Yes, with a guest</button>
+      <button type="button" data-plus="no" onclick="setPlus(this, false, state)">Just myself</button>
+    </div>
+
+    <div id="plus-name-wrap" class="hidden">
+      <label class="field-label" for="plus-name">Your guest&rsquo;s name <span class="opt">(optional)</span></label>
+      <input id="plus-name" class="text-input" type="text" placeholder="Who are you bringing?" autocomplete="off" />
+    </div>
+
+    <button id="save" class="submit" onclick="submitYes(state)">Send my RSVP</button>
+    <p id="msg" class="msg"></p>
+  `);
+}
+
+function setPlus(btn, val, state) {
+  state.plus_one = val;
+  app.querySelectorAll('.choice button').forEach(b => {
+    const active = (b.dataset.plus === 'yes') === val;
+    b.setAttribute('aria-pressed', String(active));
+  });
+  document.getElementById('plus-name-wrap').classList.toggle('hidden', !val);
+}
+
+async function submitYes(state) {
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const msg = document.getElementById('msg');
+  if (!name) { msg.textContent = 'Please enter your full name.'; return; }
+  if (!email || !/.+@.+\..+/.test(email)) { msg.textContent = 'Please enter a valid email address.'; return; }
+
+  const plusName = state.plus_one ? document.getElementById('plus-name').value.trim() : '';
+  const btn = document.getElementById('save');
+  btn.disabled = true; msg.textContent = 'Sending…';
+
+  try {
+    const res = await fetch('/api/rsvp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, plus_one: state.plus_one, plus_one_name: plusName, attending: true })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { btn.disabled = false; msg.textContent = 'Could not save — please try again.'; return; }
+    done(data);
+  } catch (err) {
+    btn.disabled = false;
+    msg.textContent = 'Could not save — please try again.';
+  }
+}
+
+function chooseNo() {
+  h(`
+    <div class="done decline">
+      <div class="seal">&#10022;</div>
+      <h3>Thank you</h3>
+      <p>We understand you have other things to attend to. Thank you!</p>
+    </div>
+  `);
+}
+
+function done(data) {
+  const guest = data.plus_one
+    ? (data.plus_one_name ? `you and ${esc(data.plus_one_name)}` : 'you and your guest')
+    : 'you';
+  h(`
+    <div class="done">
+      <div class="seal">&#10084;</div>
+      <h3>We can't wait</h3>
+      <p>Thank you, ${esc(firstName(data.full_name || data.name))} — we'll be delighted to celebrate with ${guest}.</p>
+      <p style="margin-top: 10px;">A confirmation with your card details has been sent to <strong>${esc(data.email || '')}</strong>.</p>
+      <p style="margin-top: 8px; font-size: .8rem; color: rgba(34,39,31,.5);">Bring your card to the door.</p>
+    </div>
+  `);
+  celebrate();
+}
+
+// A brief gold-and-emerald confetti fall on acceptance (reduced-motion aware).
+function celebrate() {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#C9A227', '#E4C874', '#0B3D2E', '#B33A3A', '#F6F1E7'];
+  for (let i = 0; i < 44; i++) {
+    const p = document.createElement('i');
+    p.className = 'confetti-piece';
+    const size = 6 + Math.random() * 7;
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.width = size + 'px';
+    p.style.height = size * 0.5 + 'px';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = (Math.random() * 0.3) + 's';
+    p.style.animationDuration = (1.5 + Math.random() * 1.3) + 's';
+    p.style.setProperty('--x', (Math.random() * 180 - 90) + 'px');
+    p.style.setProperty('--r', (Math.random() * 760 - 380) + 'deg');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 3200);
+  }
+}
+
+function firstName(n) { return String(n).trim().split(/\s+/)[0] || n; }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+renderPrompt();
+</script>
+</body>
+</html>

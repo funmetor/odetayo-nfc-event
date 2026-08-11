@@ -28,12 +28,12 @@
   "routes": [
     {
       "src": "/scan\\.html",
-      "dest": "https://nfc-event-production.up.railway.app/register/#rsvp",
+      "dest": "/rsvp.html",
       "statusCode": 302
     },
     {
       "src": "/?$",
-      "dest": "https://nfc-event-production.up.railway.app/register/#rsvp",
+      "dest": "/rsvp.html",
       "statusCode": 302
     },
     {

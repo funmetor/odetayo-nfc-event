@@ -471,16 +471,21 @@ function chooseNo() {
 }
 
 function done(data) {
-  const guest = data.plus_one
-    ? (data.plus_one_name ? `you and ${esc(data.plus_one_name)}` : 'you and your guest')
+  const g = data.guest || data;
+  const guest = g.plus_one
+    ? (g.plus_one_name ? `you and ${esc(g.plus_one_name)}` : 'you and your guest')
     : 'you';
+  const firstName = String(g.name || '').trim().split(/\s+/)[0] || 'there';
   h(`
     <div class="done">
       <div class="seal">&#10084;</div>
       <h3>We can't wait</h3>
-      <p>Thank you, ${esc(firstName(data.full_name || data.name))} — we'll be delighted to celebrate with ${guest}.</p>
-      <p style="margin-top: 10px;">A confirmation with your card details has been sent to <strong>${esc(data.email || '')}</strong>.</p>
-      <p style="margin-top: 8px; font-size: .8rem; color: rgba(34,39,31,.5);">Bring your card to the door.</p>
+      <p>Thank you, ${esc(firstName)} — we'll be delighted to celebrate with ${guest}.</p>
+      <p style="margin-top: 12px; padding: 14px; background: var(--ivory); border: 1px solid var(--ivory-dim); border-radius: 7px;">
+        <strong style="color: var(--emerald);">An email with your 4-digit check-in code and QR has been sent to</strong><br/>
+        <span style="color: var(--emerald); font-weight: 500;">${esc(g.email || '')}</span>
+      </p>
+      <p style="margin-top: 12px; font-size: .8rem; color: rgba(34,39,31,.5);">Please check your inbox (and spam folder). Bring your card or code to the door.</p>
     </div>
   `);
   celebrate();

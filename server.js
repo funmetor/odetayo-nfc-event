@@ -102,7 +102,7 @@ const registrationLimiter = rateLimit({
 
 const checkinLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 3,
+  max: 60,
   message: { error: 'Too many check-in attempts. Please try again.' },
   standardHeaders: true,
   legacyHeaders: false

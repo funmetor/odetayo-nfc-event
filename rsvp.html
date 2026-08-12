@@ -348,6 +348,27 @@ body {
 }
 
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* ── attribution (powered by) ────────────────────────────────────── */
+.attribution {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 16px;
+  background: var(--emerald-deep);
+  color: rgba(246,241,231,.6);
+  font-family: var(--sans);
+  font-size: .74rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(201,162,39,.25);
+}
+.attribution-logo {
+  height: 30px;
+  width: auto;
+  display: inline-block;
+}
   </style>
 </head>
 <body>
@@ -384,6 +405,11 @@ body {
     <p class="foot" id="rsvp-foot">Bring your card to the celebration — tap or scan it at the door.</p>
   </section>
 </main>
+
+<footer class="attribution">
+  <span>Powered by</span>
+  <img src="/geegzit-logo.png" alt="Geegzit" class="attribution-logo" />
+</footer>
 
 <script>
 const app = document.getElementById('app');

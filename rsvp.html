@@ -388,6 +388,7 @@ body {
 <script>
 const app = document.getElementById('app');
 const h = (html) => { app.innerHTML = html; };
+let state = { plus_one: false };
 
 function renderPrompt() {
   h(`
@@ -401,7 +402,7 @@ function renderPrompt() {
 }
 
 function chooseYes() {
-  const state = { plus_one: false };
+  state = { plus_one: false };
   h(`
     <label class="field-label" for="name">Full name</label>
     <input id="name" class="text-input" type="text" placeholder="First and last name" autocomplete="name" />
@@ -411,8 +412,8 @@ function chooseYes() {
 
     <label class="field-label">Bringing a plus-one?</label>
     <div class="choice" role="group" aria-label="Plus one">
-      <button type="button" class="is-coral" data-plus="yes" onclick="setPlus(this, true, state)">Yes, with a guest</button>
-      <button type="button" data-plus="no" onclick="setPlus(this, false, state)">Just myself</button>
+      <button type="button" id="plusYes" class="is-coral">Yes, with a guest</button>
+      <button type="button" id="plusNo">Just myself</button>
     </div>
 
     <div id="plus-name-wrap" class="hidden">
@@ -420,21 +421,23 @@ function chooseYes() {
       <input id="plus-name" class="text-input" type="text" placeholder="Who are you bringing?" autocomplete="off" />
     </div>
 
-    <button id="save" class="submit" onclick="submitYes(state)">Send my RSVP</button>
+    <button id="save" class="submit">Send my RSVP</button>
     <p id="msg" class="msg"></p>
   `);
+
+  document.getElementById('plusYes').addEventListener('click', () => setPlus(true));
+  document.getElementById('plusNo').addEventListener('click', () => setPlus(false));
+  document.getElementById('save').addEventListener('click', submitYes);
 }
 
-function setPlus(btn, val, state) {
+function setPlus(val) {
   state.plus_one = val;
-  app.querySelectorAll('.choice button').forEach(b => {
-    const active = (b.dataset.plus === 'yes') === val;
-    b.setAttribute('aria-pressed', String(active));
-  });
+  document.getElementById('plusYes').setAttribute('aria-pressed', String(val));
+  document.getElementById('plusNo').setAttribute('aria-pressed', String(!val));
   document.getElementById('plus-name-wrap').classList.toggle('hidden', !val);
 }
 
-async function submitYes(state) {
+async function submitYes() {
   const name = document.getElementById('name').value.trim();
   const email = document.getElementById('email').value.trim();
   const msg = document.getElementById('msg');
@@ -472,20 +475,18 @@ function chooseNo() {
 
 function done(data) {
   const g = data.guest || data;
-  const guest = g.plus_one
-    ? (g.plus_one_name ? `you and ${esc(g.plus_one_name)}` : 'you and your guest')
-    : 'you';
   const firstName = String(g.name || '').trim().split(/\s+/)[0] || 'there';
   h(`
     <div class="done">
       <div class="seal">&#10084;</div>
-      <h3>We can't wait</h3>
-      <p>Thank you, ${esc(firstName)} — we'll be delighted to celebrate with ${guest}.</p>
+      <h3>Thank you for accepting our invite</h3>
+      <p>Thank you, ${esc(firstName)} — we're so glad you'll be joining us.</p>
       <p style="margin-top: 12px; padding: 14px; background: var(--ivory); border: 1px solid var(--ivory-dim); border-radius: 7px;">
-        <strong style="color: var(--emerald);">An email with your 4-digit check-in code and QR has been sent to</strong><br/>
+        <strong style="color: var(--emerald);">Please check your email.</strong><br/>
+        <span style="color: rgba(34,39,31,.7); font-size: .86rem;">We've sent your entry code and QR to</span><br/>
         <span style="color: var(--emerald); font-weight: 500;">${esc(g.email || '')}</span>
       </p>
-      <p style="margin-top: 12px; font-size: .8rem; color: rgba(34,39,31,.5);">Please check your inbox (and spam folder). Bring your card or code to the door.</p>
+      <p style="margin-top: 12px; font-size: .8rem; color: rgba(34,39,31,.5);">Didn't see it? Check your spam or junk folder.</p>
     </div>
   `);
   celebrate();

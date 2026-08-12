@@ -29,6 +29,46 @@ async function setImage(type, imageData) {
   await sql`INSERT INTO site_images (type, image_data) VALUES (${type}, ${imageData}) ON CONFLICT (type) DO UPDATE SET image_data = ${imageData}`;
 }
 
+// ---- RSVP page settings (key/value) ----
+const DEFAULT_RSVP_SETTINGS = {
+  crest_initials: 'TO',
+  eyebrow: 'You\u2019re invited to celebrate',
+  event_name: 'Team Odetayo',
+  sub: 'Two families, one joyful celebration \u2014 and we\u2019d love you there.',
+  date_display: '26th April 2026',
+  time_display: '2:00 PM',
+  venue_name: 'Epe & Lekki Phase 1',
+  hashtag: '#TeamOdetayo',
+  cta: 'Respond to your invitation',
+  bg_color: '#0B3D2E',
+  accent_color: '#C9A227',
+  ivory_color: '#F6F1E7',
+  rsvp_title: 'Will you celebrate with us?',
+  foot: 'Bring your code to the celebration \u2014 tap or scan it at the door.'
+};
+
+async function getRsvpSettings() {
+  try {
+    const rows = await sql`SELECT key, value FROM rsvp_settings`;
+    const stored = {};
+    for (const r of rows) stored[r.key] = r.value;
+    return { ...DEFAULT_RSVP_SETTINGS, ...stored };
+  } catch {
+    return { ...DEFAULT_RSVP_SETTINGS };
+  }
+}
+
+async function saveRsvpSettings(settings) {
+  await ensureDb();
+  for (const [key, value] of Object.entries(settings)) {
+    if (!(key in DEFAULT_RSVP_SETTINGS)) continue;
+    await sql`
+      INSERT INTO rsvp_settings (key, value) VALUES (${key}, ${value})
+      ON CONFLICT (key) DO UPDATE SET value = ${value}
+    `;
+  }
+}
+
 async function getAllImages() {
   const result = { scan: null, register: null, checkin: null };
   try {
@@ -48,6 +88,7 @@ async function ensureDb() {
     await sql`CREATE TABLE IF NOT EXISTS cards (id SERIAL PRIMARY KEY, uid_hash VARCHAR(64) UNIQUE NOT NULL, status VARCHAR(20) DEFAULT 'unused', created_at TIMESTAMP DEFAULT NOW())`;
     await sql`CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, event_type VARCHAR(50) NOT NULL, card_uid_hash VARCHAR(64), guest_id INTEGER, ip_address VARCHAR(45), user_agent TEXT, details JSONB, created_at TIMESTAMP DEFAULT NOW())`;
     await sql`CREATE TABLE IF NOT EXISTS site_images (type VARCHAR(20) PRIMARY KEY, image_data TEXT)`;
+    await sql`CREATE TABLE IF NOT EXISTS rsvp_settings (key VARCHAR(50) PRIMARY KEY, value TEXT)`;
     // Ensure columns exist for tables that may have been created before V2
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS card_id INTEGER`;
     await sql`ALTER TABLE guests ADD COLUMN IF NOT EXISTS code VARCHAR(6)`;
@@ -662,6 +703,28 @@ app.get('/api/images', async (req, res) => {
   await ensureDb();
   const images = await getAllImages();
   res.json(images);
+});
+
+// ---- Admin: RSVP settings ----
+app.get('/api/admin/rsvp-settings', async (req, res) => {
+  const settings = await getRsvpSettings();
+  res.json(settings);
+});
+
+app.post('/api/admin/rsvp-settings', async (req, res) => {
+  try {
+    await saveRsvpSettings(req.body || {});
+    res.json({ success: true });
+  } catch (err) {
+    console.error('RSVP settings error:', err);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
+// ---- Public: RSVP settings ----
+app.get('/api/rsvp-settings', async (req, res) => {
+  const settings = await getRsvpSettings();
+  res.json(settings);
 });
 
 // ---- Admin: audit logs ----

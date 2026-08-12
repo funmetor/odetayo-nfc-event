@@ -355,22 +355,22 @@ body {
   <!-- ══ HERO / INTRO ══════════════════════════════════════════════════ -->
   <section class="hero">
     <div class="hero-inner" id="hero-inner">
-      <div class="crest" aria-hidden="true"><span class="crest-initials">TO</span></div>
+      <div class="crest" aria-hidden="true"><span class="crest-initials" id="crest-initials">TO</span></div>
 
-      <p class="eyebrow">You&rsquo;re invited to celebrate</p>
+      <p class="eyebrow" id="hero-eyebrow">You&rsquo;re invited to celebrate</p>
 
       <h1 class="wordmark">
-        <span class="w-top">Team</span>
-        <span class="w-main">Odetayo</span>
+        <span class="w-top" id="hero-wtop">Team</span>
+        <span class="w-main" id="hero-name">Odetayo</span>
       </h1>
 
       <div class="rule" aria-hidden="true"><span></span><i>&#10086;</i><span></span></div>
 
-      <p class="sub">Two families, one joyful celebration&nbsp;&mdash;<br />and we&rsquo;d love you there.</p>
-      <p class="detail-tbd">26th April 2026 &middot; Epe &amp; Lekki Phase 1 &middot; 2:00 PM</p>
+      <p class="sub" id="hero-sub">Two families, one joyful celebration&nbsp;&mdash;<br />and we&rsquo;d love you there.</p>
+      <p class="detail-tbd" id="hero-detail">26th April 2026 &middot; Epe &amp; Lekki Phase 1 &middot; 2:00 PM</p>
 
-      <a href="#rsvp" class="btn-gold hero-cta">Respond to your invitation</a>
-      <p class="team">#TeamOdetayo</p>
+      <a href="#rsvp" class="btn-gold hero-cta" id="hero-cta">Respond to your invitation</a>
+      <p class="team" id="hero-hashtag">#TeamOdetayo</p>
     </div>
 
     <a href="#rsvp" class="scroll-cue" aria-label="Scroll to RSVP">&#8964;</a>
@@ -379,9 +379,9 @@ body {
   <!-- ══ RSVP ══════════════════════════════════════════════════════════ -->
   <section class="rsvp" id="rsvp">
     <p class="eyebrow eyebrow-dark">Kindly respond</p>
-    <h2 class="rsvp-title">Will you celebrate with us?</h2>
+    <h2 class="rsvp-title" id="rsvp-title">Will you celebrate with us?</h2>
     <div id="app" class="card">Loading&hellip;</div>
-    <p class="foot">Bring your card to the celebration — tap or scan it at the door.</p>
+    <p class="foot" id="rsvp-foot">Bring your card to the celebration — tap or scan it at the door.</p>
   </section>
 </main>
 
@@ -513,11 +513,48 @@ function celebrate() {
   }
 }
 
+async function hydrateSettings() {
+  try {
+    const res = await fetch('/api/rsvp-settings');
+    if (!res.ok) return;
+    const s = await res.json();
+    
+    const root = document.documentElement;
+    if (s.bg_color) root.style.setProperty('--emerald', s.bg_color);
+    if (s.accent_color) root.style.setProperty('--gold', s.accent_color);
+    if (s.ivory_color) root.style.setProperty('--ivory', s.ivory_color);
+    
+    if (s.event_name) {
+      const parts = String(s.event_name).trim().split(/\s+/);
+      if (parts.length > 1) {
+        document.getElementById('hero-wtop').textContent = parts[0];
+        document.getElementById('hero-name').textContent = parts.slice(1).join(' ');
+      } else {
+        document.getElementById('hero-wtop').textContent = 'Team';
+        document.getElementById('hero-name').textContent = parts[0];
+      }
+    }
+    if (s.crest_initials) document.getElementById('crest-initials').textContent = s.crest_initials;
+    if (s.eyebrow) document.getElementById('hero-eyebrow').innerHTML = esc(s.eyebrow);
+    if (s.sub) document.getElementById('hero-sub').innerHTML = esc(s.sub);
+    if (s.cta) document.getElementById('hero-cta').textContent = s.cta;
+    if (s.hashtag) document.getElementById('hero-hashtag').textContent = s.hashtag;
+    if (s.rsvp_title) document.getElementById('rsvp-title').textContent = s.rsvp_title;
+    if (s.foot) document.getElementById('rsvp-foot').textContent = s.foot;
+    
+    const detailParts = [s.date_display, s.venue_name, s.time_display].filter(Boolean);
+    if (detailParts.length) document.getElementById('hero-detail').textContent = detailParts.join(' · ');
+  } catch (err) {
+    console.error('Failed to load RSVP settings:', err);
+  }
+}
+
 function firstName(n) { return String(n).trim().split(/\s+/)[0] || n; }
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+hydrateSettings();
 renderPrompt();
 </script>
 </body>

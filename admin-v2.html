@@ -315,6 +315,78 @@ tr:hover {
   border-color: var(--mint);
 }
 
+.settings-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.settings-group {
+  background: #fafbfa;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.settings-group h3 {
+  font-size: 13px;
+  color: #555;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.settings-field {
+  margin-bottom: 14px;
+}
+
+.settings-field:last-child {
+  margin-bottom: 0;
+}
+
+.settings-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.settings-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--mint);
+}
+
+.settings-input[type="color"] {
+  height: 44px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.settings-actions {
+  margin-top: 20px;
+  text-align: center;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.settings-hint {
+  font-size: 12px;
+  color: #888;
+  margin: 12px 0 0;
+  text-align: center;
+}
+
 .modal {
   display: none;
   position: fixed;
@@ -426,6 +498,7 @@ tr:hover {
       <a href="#" class="active" onclick="showSection('dashboard')">Dashboard</a>
       <a href="#" onclick="showSection('guests')">Guests</a>
       <a href="#" onclick="showSection('images')">Images</a>
+      <a href="#" onclick="showSection('rsvp')">RSVP</a>
       <a href="#" onclick="showSection('audit')">Audit Log</a>
     </nav>
   </div>
@@ -556,6 +629,96 @@ tr:hover {
     </div>
   </div>
 
+  <!-- RSVP Settings Section -->
+  <div id="rsvp-section" style="display: none;">
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">RSVP Page — Customize the Invite</h2>
+      </div>
+
+      <div class="settings-form">
+        <div class="settings-group">
+          <h3>Colors</h3>
+          <div class="settings-field">
+            <label class="settings-label" for="set-bg">Background color</label>
+            <input type="color" class="settings-input" id="set-bg">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-accent">Accent / gold color</label>
+            <input type="color" class="settings-input" id="set-accent">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-ivory">Text / ivory color</label>
+            <input type="color" class="settings-input" id="set-ivory">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>Invitation Text</h3>
+          <div class="settings-field">
+            <label class="settings-label" for="set-eyebrow">Top tagline (eyebrow)</label>
+            <input type="text" class="settings-input" id="set-eyebrow" placeholder="You're invited to celebrate">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-name">Event name</label>
+            <input type="text" class="settings-input" id="set-name" placeholder="Team Odetayo">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-sub">Short description</label>
+            <input type="text" class="settings-input" id="set-sub" placeholder="Two families, one joyful celebration...">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-cta">Button text</label>
+            <input type="text" class="settings-input" id="set-cta" placeholder="Respond to your invitation">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>Events Details</h3>
+          <div class="settings-field">
+            <label class="settings-label" for="set-date">Date</label>
+            <input type="text" class="settings-input" id="set-date" placeholder="26th April 2026">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-time">Time</label>
+            <input type="text" class="settings-input" id="set-time" placeholder="2:00 PM">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-venue">Venue</label>
+            <input type="text" class="settings-input" id="set-venue" placeholder="Epe & Lekki Phase 1">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-hashtag">Hashtag</label>
+            <input type="text" class="settings-input" id="set-hashtag" placeholder="#TeamOdetayo">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>Card & Footer</h3>
+          <div class="settings-field">
+            <label class="settings-label" for="set-crest">Crest initials</label>
+            <input type="text" class="settings-input" id="set-crest" placeholder="TO" maxlength="6">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-title">RSVP card title</label>
+            <input type="text" class="settings-input" id="set-title" placeholder="Will you celebrate with us?">
+          </div>
+          <div class="settings-field">
+            <label class="settings-label" for="set-foot">Footer note</label>
+            <input type="text" class="settings-input" id="set-foot" placeholder="Bring your code to the celebration — tap or scan it at the door.">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-actions">
+        <button class="btn btn-primary" onclick="saveRsvpSettings()">Save Settings</button>
+        <button class="btn btn-secondary" onclick="loadRsvpSettings()">Reset Unsaved</button>
+        <button class="btn btn-secondary" onclick="window.open('/rsvp.html','_blank')">Preview Page</button>
+      </div>
+      <p class="settings-hint" id="settings-status"></p>
+    </div>
+  </div>
+
   <!-- Audit Log Section -->
   <div id="audit-section" style="display: none;">
     <div class="section">
@@ -618,6 +781,7 @@ function showSection(section) {
   if (section === 'dashboard') loadStats();
   if (section === 'guests') loadGuests();
   if (section === 'images') loadImages();
+  if (section === 'rsvp') loadRsvpSettings();
   if (section === 'audit') loadAuditLogs();
 }
 
@@ -826,6 +990,67 @@ async function saveAllImages() {
   
   alert('Images saved successfully!');
   loadImages();
+}
+
+// RSVP Settings
+const rsvpFieldMap = {
+  'set-bg': 'bg_color',
+  'set-accent': 'accent_color',
+  'set-ivory': 'ivory_color',
+  'set-eyebrow': 'eyebrow',
+  'set-name': 'event_name',
+  'set-sub': 'sub',
+  'set-cta': 'cta',
+  'set-date': 'date_display',
+  'set-time': 'time_display',
+  'set-venue': 'venue_name',
+  'set-hashtag': 'hashtag',
+  'set-crest': 'crest_initials',
+  'set-title': 'rsvp_title',
+  'set-foot': 'foot'
+};
+
+async function loadRsvpSettings() {
+  try {
+    const res = await fetch('/api/admin/rsvp-settings');
+    const data = await res.json();
+    for (const [fieldId, key] of Object.entries(rsvpFieldMap)) {
+      const el = document.getElementById(fieldId);
+      if (el) el.value = data[key] || '';
+    }
+    document.getElementById('settings-status').textContent = '';
+  } catch (err) {
+    console.error('Failed to load RSVP settings:', err);
+  }
+}
+
+async function saveRsvpSettings() {
+  const body = {};
+  for (const [fieldId, key] of Object.entries(rsvpFieldMap)) {
+    const el = document.getElementById(fieldId);
+    if (el) body[key] = el.value.trim();
+  }
+  
+  try {
+    const res = await fetch('/api/admin/rsvp-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    
+    const status = document.getElementById('settings-status');
+    if (data.success) {
+      status.textContent = '✓ Settings saved. The RSVP page now uses your updates.';
+      status.style.color = 'var(--mint)';
+    } else {
+      status.textContent = 'Failed to save settings. Please try again.';
+      status.style.color = 'var(--danger)';
+    }
+  } catch (err) {
+    console.error('Failed to save RSVP settings:', err);
+    document.getElementById('settings-status').textContent = 'Failed to save settings. Please try again.';
+  }
 }
 
 // Audit Logs
